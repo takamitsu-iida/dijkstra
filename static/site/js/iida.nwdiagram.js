@@ -8,8 +8,7 @@
       return;
     }
 
-    let eles = iida.appdata.fig_3_7;
-
+    let _eles = iida.appdata.fig_3_6;
 
     let cy_styles = [
 
@@ -94,7 +93,7 @@
 
       style: cy_styles, // see above
 
-      elements: eles
+      elements: _eles
     });
     cytoscape.warnings(true);
 
@@ -180,7 +179,7 @@
       });
     }
 
-    ['idData1', 'idData2', 'idData3'].forEach(id => {
+    ['idData1', 'idData2'].forEach(id => {
       let tag = document.getElementById(id);
       if (!tag) { return; }
       tag.addEventListener('click', function (evt) {
@@ -191,22 +190,14 @@
         });
         evt.target.classList.add('active');
 
-        let clos_clusters;
         switch (id) {
           case 'idData1':
-            clos_clusters = iida.appdata.clos_clusters_1;
+            _eles = iida.appdata.fig_3_6;
             break;
           case 'idData2':
-            clos_clusters = iida.appdata.clos_clusters_2;
-            break;
-          case 'idData3':
-            clos_clusters = iida.appdata.clos_clusters_3;
+            _eles = iida.appdata.fig_3_7;
             break;
         }
-
-        let text_data = JSON.stringify(clos_clusters, null, 2)
-        // console.log(text_data);
-        document.getElementById('idTextArea').textContent = text_data;
 
         // remove all elements
         cy.elements().remove();
@@ -215,10 +206,10 @@
         cy.reset();
 
         // add new elements
-        cy.add(iida.appdata.get_elements(clos_clusters));
+        cy.add(_eles);
 
         // layout again
-        cy.layout({ name: "FiveStageClos", options: LAYOUT_OPTIONS }).run();
+        cy.layout({ name: "preset"}).run();
       });
     });
 
