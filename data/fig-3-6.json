@@ -1,0 +1,161 @@
+[
+  {
+    "group": "nodes",
+    "data": { "id": "s" },
+    "position": { "x": 100, "y": 200 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "A" },
+    "position": { "x": 200, "y": 100 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "B" },
+    "position": { "x": 300, "y": 200 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "C" },
+    "position": { "x": 200, "y": 300 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "D" },
+    "position": { "x": 500, "y": 100 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "E" },
+    "position": { "x": 400, "y": 200 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "F" },
+    "position": { "x": 500, "y": 300 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "t" },
+    "position": { "x": 600, "y": 200 }
+  },
+
+  {
+    "group": "edges",
+    "data": {
+      "id": "sA",
+      "source": "s",
+      "target": "A",
+      "weight": 1
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "sB",
+      "source": "s",
+      "target": "B",
+      "weight": 2
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "sC",
+      "source": "s",
+      "target": "C",
+      "weight": 5
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "AD",
+      "source": "A",
+      "target": "D",
+      "weight": 5
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "AE",
+      "source": "A",
+      "target": "E",
+      "weight": 1
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "BD",
+      "source": "B",
+      "target": "D",
+      "weight": 5
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "BE",
+      "source": "B",
+      "target": "E",
+      "weight": 7
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "BF",
+      "source": "B",
+      "target": "F",
+      "weight": 4
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "CE",
+      "source": "C",
+      "target": "E",
+      "weight": 2
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "CF",
+      "source": "C",
+      "target": "F",
+      "weight": 1
+    }
+  },
+
+  {
+    "group": "edges",
+    "data": {
+      "id": "Dt",
+      "source": "D",
+      "target": "t",
+      "weight": 4
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "Et",
+      "source": "E",
+      "target": "t",
+      "weight": 9
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "Ft",
+      "source": "F",
+      "target": "t",
+      "weight": 2
+    }
+  }
+]

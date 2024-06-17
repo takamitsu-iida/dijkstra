@@ -4,7 +4,6 @@
 *.code-workspace
 
 # フォルダ単位で無視
-/data/
 /log/
 /logs/
 
@@ -284,4 +283,3 @@ jspm_packages
 
 # Optional REPL history
 .node_repl_history
-

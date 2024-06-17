@@ -1,0 +1,123 @@
+[
+  {
+    "group": "nodes",
+    "data": { "id": "s" },
+    "position": { "x": 100, "y": 200 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "A" },
+    "position": { "x": 200, "y": 100 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "B" },
+    "position": { "x": 200, "y": 300 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "C" },
+    "position": { "x": 300, "y": 100 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "D" },
+    "position": { "x": 300, "y": 200 }
+  },
+  {
+    "group": "nodes",
+    "data": { "id": "t" },
+    "position": { "x": 400, "y": 200 }
+  },
+
+  {
+    "group": "edges",
+    "data": {
+      "id": "sA",
+      "source": "s",
+      "target": "A",
+      "weight": 1
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "sB",
+      "source": "s",
+      "target": "B",
+      "weight": 4
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "AB",
+      "source": "A",
+      "target": "B",
+      "weight": 3
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "AC",
+      "source": "A",
+      "target": "C",
+      "weight": 2
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "AD",
+      "source": "A",
+      "target": "D",
+      "weight": 6
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "BD",
+      "source": "B",
+      "target": "D",
+      "weight": 1
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "Bt",
+      "source": "B",
+      "target": "t",
+      "weight": 5
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "Ct",
+      "source": "C",
+      "target": "t",
+      "weight": 3
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "CD",
+      "source": "C",
+      "target": "D",
+      "weight": 3
+    }
+  },
+  {
+    "group": "edges",
+    "data": {
+      "id": "Dt",
+      "source": "D",
+      "target": "t",
+      "weight": 1
+    }
+  }
+]
