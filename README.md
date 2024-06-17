@@ -7,6 +7,10 @@ cytoscape.jsのエレメント形式のグラフを対象にダイクストラ�
 >
 > https://js.cytoscape.org/#notation/elements-json
 
+
+
+
+
 <br>
 
 # Reference
@@ -18,9 +22,9 @@ cytoscape.jsのエレメント形式のグラフを対象にダイクストラ�
 ---
 <br>
 
-以下、引用
+いくつか本を手に取った中で上記の本が最も分かりやすかった。以下に引用する。
 
-<br><br>
+<br>
 
 ## ３章　最短経路問題
 
