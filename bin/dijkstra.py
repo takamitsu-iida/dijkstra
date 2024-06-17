@@ -307,7 +307,7 @@ def calc_dijkstra(elements: list, source_id: str):
 
             u = get_element_by_id(elements, u_id)
 
-            # まだLに入っていない頂点 u に対して、すなわち訪問済みは無視して、
+            # まだLに入っていない頂点 u に対してのみ、すなわち訪問済みは無視して、
             if u.get('data').get('_dijkstra').get('visited') == True:
                 continue
 
@@ -332,7 +332,6 @@ def calc_dijkstra(elements: list, source_id: str):
             if u.get('data').get('_dijkstra').get('distance') < v.get('data').get('_dijkstra').get('distance') + weight:
                 # 既存の値の方が小さい場合は更新しない
                 logger.info(f"skip: v={v_id}, u={u_id}, u-distance={u.get('data').get('_dijkstra').get('distance')}, new={v.get('data').get('_dijkstra').get('distance') + weight}")
-                continue
             elif u.get('data').get('_dijkstra').get('distance') == v.get('data').get('_dijkstra').get('distance') + weight:
                 # 既存の値と同じ場合は、その経路も使える、ということなのでポインタを追加する
                 logger.info(f"add: v={v_id}, u={u_id}, u-distance={u.get('data').get('_dijkstra').get('distance')}, new={v.get('data').get('_dijkstra').get('distance') + weight}")

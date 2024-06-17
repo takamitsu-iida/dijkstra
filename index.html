@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+  <title>network diagram</title>
+
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <link rel="stylesheet" type="text/css" href="./static/site/css/iida.css" />
+
+  <!-- jQuery -->
+  <script src="https://unpkg.com/jquery/dist/jquery.min.js"></script>
+
+  <!-- cytoscape.js -->
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+
+  <!-- cytoscape-panzom.js -->
+  <script src="https://unpkg.com/cytoscape-panzoom/cytoscape-panzoom.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/cytoscape-panzoom/cytoscape.js-panzoom.css" />
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/cytoscape-panzoom/font-awesome-4.0.3/css/font-awesome.min.css" />
+
+  <script src="https://unpkg.com/layout-base/layout-base.js"></script>
+
+  <!-- iida.main.js -->
+  <script type="text/javascript" src="./static/site/js/iida.main.js"></script>
+
+  <!-- iida.dijkstra.js -->
+  <script type="text/javascript" src="./static/site/js/iida.dijkstra.js"></script>
+
+  <!-- iida.nwdiagram.js -->
+  <script type="text/javascript" src="./static/site/js/iida.nwdiagram.js"></script>
+
+</head>
+
+<body>
+
+  <div class="wrapper">
+
+    <div class="header_panel">
+      <span class="control_span">
+        [DATA]
+        <a id="idData1" name="dataChangeMenu" class="active">Data 1</a>
+        <a id="idData2" name="dataChangeMenu">Data 2</a>
+        <a id="idData3" name="dataChangeMenu">Data 3</a>
+      </span>
+      <span style="float: right">
+        <a href="https://github.com/takamitsu-iida/network-diagram3" target="_blank" rel="noopener noreferrer">source code</a> (github)
+      </span>
+    </div>
+
+    <div class="left_panel">
+      <p><input id="idInitialPosition" , type="button" value="Initial Position"></p>
+      <p>dump to console<br><input id="idToJson", type="button" value="JSON"></p>
+      <p>source = s<br>target = t<br>ダイクストラ法で最短パスを計算します<br><input id="idCalcDijkstra", type="button" value="計算"></p>
+    </div>
+
+    <div class="right_panel">
+      <div id="cy"></div>
+    </div>
+  </div>
+
+</body>
+
+<script>
+  document.addEventListener("DOMContentLoaded", iida.main)
+</script>
+
+</html>
