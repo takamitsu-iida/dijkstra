@@ -8,8 +8,7 @@ cytoscape.jsのエレメント形式のグラフを対象にダイクストラ�
 > https://js.cytoscape.org/#notation/elements-json
 
 
-
-
+以下に記載の **章末問題** を解いた[ライブデモ](https://takamitsu-iida.github.io/dijkstra/index.html)
 
 <br>
 
