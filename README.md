@@ -2,14 +2,10 @@
 
 cytoscape.jsのエレメント形式のグラフを対象にダイクストラのアルゴリズムで最短経路を計算する。
 
-> Elements JSON
+
+> cytoscape.jsにおけるエレメント形式
 >
 > https://js.cytoscape.org/#notation/elements-json
->
-
-
-
-
 
 <br>
 
@@ -24,7 +20,7 @@ cytoscape.jsのエレメント形式のグラフを対象にダイクストラ�
 
 以下、引用
 
-<br<br>
+<br><br>
 
 ## ３章　最短経路問題
 
