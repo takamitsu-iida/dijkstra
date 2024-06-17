@@ -12,7 +12,7 @@
   {
     "group": "nodes",
     "data": { "id": "B" },
-    "position": { "x": 300, "y": 200 }
+    "position": { "x": 250, "y": 200 }
   },
   {
     "group": "nodes",
@@ -22,22 +22,22 @@
   {
     "group": "nodes",
     "data": { "id": "D" },
-    "position": { "x": 500, "y": 100 }
+    "position": { "x": 400, "y": 100 }
   },
   {
     "group": "nodes",
     "data": { "id": "E" },
-    "position": { "x": 400, "y": 200 }
+    "position": { "x": 350, "y": 200 }
   },
   {
     "group": "nodes",
     "data": { "id": "F" },
-    "position": { "x": 500, "y": 300 }
+    "position": { "x": 400, "y": 300 }
   },
   {
     "group": "nodes",
     "data": { "id": "t" },
-    "position": { "x": 600, "y": 200 }
+    "position": { "x": 500, "y": 200 }
   },
 
   {
