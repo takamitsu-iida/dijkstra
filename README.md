@@ -1,12 +1,8 @@
 # Dijkstra
 
-cytoscape.jsのエレメント形式のグラフを対象にダイクストラのアルゴリズムで最短経路を計算する。
+cytoscape.jsのエレメント形式のグラフを対象にダイクストラのアルゴリズムで最短経路を計算するPythonおよびJavaScriptの実装例。
 
-
-> cytoscape.jsにおけるエレメント形式
->
-> https://js.cytoscape.org/#notation/elements-json
-
+効率よりもわかりやすさを重視し、本に記載されている通り、忠実に実装している。
 
 以下に記載の **章末問題** を解いた[ライブデモ](https://takamitsu-iida.github.io/dijkstra/index.html)
 
@@ -14,14 +10,22 @@ cytoscape.jsのエレメント形式のグラフを対象にダイクストラ�
 
 # Reference
 
-グラフ理論入門　宮崎修一 著 森北出版株式会社
+cytoscape.jsにおけるグラフのデータ構造については以下のリンクを参照。
 
+https://js.cytoscape.org/#notation/elements-json
+
+
+ダイクストラアルゴリズムについては以下の書籍を参照。
+
+グラフ理論入門　宮崎修一 著 森北出版株式会社
 
 <br>
 ---
 <br>
 
-いくつか本を手に取った中で上記の本が最も分かりやすかった。以下に引用する。
+いくつか手に取った本の中でこれが最も分かりやすかった。
+
+以下にダイクストラアルゴリズムの部分を引用する。
 
 <br>
 
