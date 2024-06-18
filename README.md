@@ -1,10 +1,11 @@
 # Dijkstra
 
-cytoscape.jsのエレメント形式のグラフを対象にダイクストラのアルゴリズムで最短経路を計算するPythonおよびJavaScriptの実装例。
+ダイクストラのアルゴリズムで最短経路を計算するPythonおよびJavaScriptの実装例。
 
-効率よりもわかりやすさを重視し、本に記載されている通り、忠実に実装している。
+実装は効率や速度よりも分かりやすさを重視し、本（グラフ理論入門）に記載されている通りに忠実に実装した。
 
-以下に記載の **章末問題** をPython実装で解いた実行例。
+
+本に記載されている **章末問題** をPython実装で解いた実行例。
 
 ```bash
 $ bin/dijkstra.py
@@ -17,7 +18,9 @@ $ bin/dijkstra.py
 
 図3.6の場合は `s -> A -> E -> C -> F -> t` という経路が最短になる。
 
-図3.7の場合は3個の等コストの最短経路が存在する。
+図3.7の場合は等コストの最短経路が3個存在する。
+
+もちろん本に記載されている解答と同じである。
 
 JavaScript実装ではcytoscape.jsの描画機能を使ってグラフを可視化しているので、結果がより分かりやすい。
 
@@ -28,20 +31,22 @@ JavaScript実装ではcytoscape.jsの描画機能を使ってグラフを可視�
 
 # Reference
 
-cytoscape.jsにおけるグラフのデータ構造については以下のリンクを参照。
+グラフのデータ表現は隣接行列や隣接リスト等、様々な記述方法があるが、ここではcytoscape.jsで用いられているJSON形式を利用している。
 
-https://js.cytoscape.org/#notation/elements-json
+> https://js.cytoscape.org/#notation/elements-json
 
 
-ダイクストラアルゴリズムについては以下の書籍を参照。
+実際にJSONで定義したグラフのデータは以下のファイルを参照。
+
+> data/fig3-6.json
+>
+> data/fig3-7.json
+
+ダイクストラアルゴリズムについては以下の書籍を参考にした。いくつか手に取った本の中でこれが最も分かりやすかった。
 
 グラフ理論入門　宮崎修一 著 森北出版株式会社 [amazon](https://www.amazon.co.jp/%E3%82%B0%E3%83%A9%E3%83%95%E7%90%86%E8%AB%96%E5%85%A5%E9%96%80-%E5%9F%BA%E6%9C%AC%E3%81%A8%E3%82%A2%E3%83%AB%E3%82%B4%E3%83%AA%E3%82%BA%E3%83%A0-%E5%AE%AE%E5%B4%8E-%E4%BF%AE%E4%B8%80/dp/4627852819/ref=ci_mcx_mr_mp_m_d_sccl_2_8/356-9824273-7555932?pd_rd_w=DYeWm&content-id=amzn1.sym.017765a6-d0f3-49d3-87bf-dfba2496c571:amzn1.symc.a24c87a6-6676-4fd8-88d3-366360238e34&pf_rd_p=017765a6-d0f3-49d3-87bf-dfba2496c571&pf_rd_r=7MAH2ZH3W1YDHEZ3QA92&pd_rd_wg=Lgawa&pd_rd_r=87a449e4-1c26-42c0-b87a-7ec2579e942a&pd_rd_i=4627852819&psc=1)
 
-<br>
----
-<br>
-
-いくつか手に取った本の中でこれが最も分かりやすかった。
+<br><br>
 
 以下にダイクストラアルゴリズムの部分を引用する。
 
