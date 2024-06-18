@@ -208,6 +208,10 @@
         // add new elements
         cy.add(_eles);
 
+        cy.nodes().forEach(node => {
+          node.data('initial_position', Object.assign({}, node.position()));
+        });
+
         // layout again
         cy.layout({ name: "preset"}).run();
       });
