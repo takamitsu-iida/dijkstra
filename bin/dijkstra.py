@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 
-import sys
-
 # グラフのデータ構造はcytoscape.jsと同様の形式であることを前提とする
-# see data/elements.json
+# dataフォルダに格納しているjsonデータを参照
 
 #
 # 標準ライブラリのインポート
 #
-import json
 import logging
+import sys
 
 from pathlib import Path
 
@@ -373,9 +371,9 @@ def get_result_paths(all_paths: list, current_paths: list, elements: list, sourc
 
 
 
-
-
 if __name__ == '__main__':
+
+    import json
 
     # ログレベル設定
     # logger.setLevel(logging.INFO)
