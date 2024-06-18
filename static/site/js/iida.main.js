@@ -22,22 +22,35 @@
 
     Promise.all([
       // read json data via network
-      // data/fig-3-6.json and data/fig-3-7.json
+      // data/fig-3-6.json and
+      // data/fig-3-7.json
       fetch('data/fig-3-6.json', { mode: 'no-cors' })
-        .then(function (res) {
-          return res.json()
+        .then(response => {
+          if (response.ok) {
+            return response.json()
+          }
+          return [];
+        })
+        .catch(error => {
+          console.error(error);
         }),
       fetch('data/fig-3-7.json', { mode: 'no-cors' })
-        .then(function (res) {
-          return res.json()
+        .then(response => {
+          if (response.ok) {
+            return response.json()
+          }
+          return [];
+        })
+        .catch(error => {
+          console.error(error);
         })
     ]).then(function (dataArray) {
       iida.appdata.fig_3_6 = dataArray[0];
       iida.appdata.fig_3_7 = dataArray[1];
 
-      // see iida.nwdiagram.js
+      // see, iida.nwdiagram.js
       iida.nwdiagram();
     });
+  }
 
-  };
 })();
