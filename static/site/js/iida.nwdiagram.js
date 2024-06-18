@@ -171,6 +171,12 @@
         evt.stopPropagation();
         evt.preventDefault();
 
+        // remove all highlights
+        cy.elements().forEach(element => {
+          element.removeClass('highlighted');
+        });
+
+        // calculate dijkstra
         iida.dijkstra(cy.elements(), source_id='s');
 
         // highlight the path from 't' to 's'

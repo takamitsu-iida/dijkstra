@@ -78,15 +78,6 @@
   iida.dijkstra = function (elements, source_id='s') {
     let nodes = elements.nodes();
 
-    nodes.forEach(node => {
-      node.removeClass('highlighted');
-    });
-
-    let edges = elements.edges();
-    edges.forEach(edge => {
-      edge.removeClass('highlighted');
-    });
-
     // 指定されたsource_idのオブジェクトを取り出しておく
     let source = elements.getElementById(source_id);
     if (!source) {
