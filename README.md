@@ -4,13 +4,10 @@ cytoscape.jsのエレメント形式のグラフを対象にダイクストラ�
 
 効率よりもわかりやすさを重視し、本に記載されている通り、忠実に実装している。
 
-以下に記載の **章末問題** を解いた[ライブデモ](https://takamitsu-iida.github.io/dijkstra/index.html)
-
-
-python実装の実行例。
+以下に記載の **章末問題** をPython実装で解いた実行例。
 
 ```bash
-(.venv) iida@FCCLS0073460:~/git/dijkstra$ bin/dijkstra.py
+$ bin/dijkstra.py
 --- fig-3-6.json ---
 [['t', 'F', 'C', 'E', 'A', 's']]
 
@@ -20,8 +17,13 @@ python実装の実行例。
 
 図3.6の場合は、t←F←C←E←A←sという経路が最短になる。
 
-図3.7の場合は、複数の最短経路が存在する。
+図3.7の場合は、3個の当コストの最短経路が存在する。
 
+JavaScript実装ではcytoscape.jsの描画機能を使ってグラフを可視化しているので、より分かりやすい。
+
+こちらの[ライブデモ](https://takamitsu-iida.github.io/dijkstra/index.html)を参照。
+
+<br>
 <br>
 
 # Reference
