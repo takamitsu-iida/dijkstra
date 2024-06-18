@@ -340,34 +340,34 @@ def calc_dijkstra(elements: list, source_id: str):
                 u.get('data').get('_dijkstra')['pointer_edges'] = edge_ids
 
 
-def get_result_paths(all_paths: list, current_paths: list, elements: list, source_id: str, target_id: str):
+def get_result_paths(all_paths: list, current_paths: list, elements: list, from_id: str):
     """
-    target_idからsource_idに遡る向きの最短経路をすべて取得する
+    from_idからアップリンク方向に遡る最短経路をすべて取得する
     """
 
     # 再帰処理による変更影響を避けるためにコピーしておく
     current_paths = current_paths.copy()
 
     # ターゲットノードを取得する
-    target = get_element_by_id(elements, target_id)
+    target = get_element_by_id(elements, from_id)
     if target is None:
-        raise ValueError(f"target_id={target_id} is not found.")
+        raise ValueError(f"target_id={from_id} is not found.")
 
     # current_pathsに自分を保存
-    current_paths.append(target_id)
-
-    # 終点に到達した場合は、ここまでのパスを保存して終了
-    if target_id == source_id:
-        all_paths.append(current_paths)
-        return
+    current_paths.append(from_id)
 
     # アップリンクのノードを取得する
     pointer_nodes = target.get('data').get('_dijkstra').get('pointer_nodes', [])
 
-    # target_idをアップリンクのノードに変更して再帰呼び出し
+    if len(pointer_nodes) == 0:
+        # アップリンクがない場合は、current_pathsを逆順にしてall_pathsに追加して終了
+        all_paths.append(current_paths[::-1])
+        return
+
+    # from_idをアップリンクのノードに変更して再帰呼び出し
     for i, pointer_node_id in enumerate(pointer_nodes):
         logger.info(f"{i} pointer_node_id={pointer_node_id} current_paths={current_paths}")
-        get_result_paths(all_paths, current_paths, elements, source_id, pointer_node_id)
+        get_result_paths(all_paths, current_paths, elements, pointer_node_id)
 
 
 
@@ -425,7 +425,7 @@ if __name__ == '__main__':
             # dump_nodes(elements)
 
             all_paths = []
-            get_result_paths(all_paths, [], elements, source_id, target_id)
+            get_result_paths(all_paths, [], elements, target_id)
 
             print(all_paths)
             print('')
