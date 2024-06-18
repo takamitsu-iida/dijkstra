@@ -42,9 +42,6 @@ log_path = log_dir.joinpath(log_file)
 # ロガーを取得する
 logger = logging.getLogger(__name__)
 
-# ログレベル設定
-logger.setLevel(logging.INFO)
-
 # フォーマット
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
@@ -345,8 +342,43 @@ def calc_dijkstra(elements: list, source_id: str):
                 u.get('data').get('_dijkstra')['pointer_edges'] = edge_ids
 
 
+def get_result_paths(all_paths: list, current_paths: list, elements: list, source_id: str, target_id: str):
+    """
+    target_idからsource_idに遡る向きの最短経路をすべて取得する
+    """
+
+    # 再帰処理による変更影響を避けるためにコピーしておく
+    current_paths = current_paths.copy()
+
+    # ターゲットノードを取得する
+    target = get_element_by_id(elements, target_id)
+    if target is None:
+        raise ValueError(f"target_id={target_id} is not found.")
+
+    # current_pathsに自分を保存
+    current_paths.append(target_id)
+
+    # 終点に到達した場合は、ここまでのパスを保存して終了
+    if target_id == source_id:
+        all_paths.append(current_paths)
+        return
+
+    # アップリンクのノードを取得する
+    pointer_nodes = target.get('data').get('_dijkstra').get('pointer_nodes', [])
+
+    # target_idをアップリンクのノードに変更して再帰呼び出し
+    for i, pointer_node_id in enumerate(pointer_nodes):
+        logger.info(f"{i} pointer_node_id={pointer_node_id} current_paths={current_paths}")
+        get_result_paths(all_paths, current_paths, elements, source_id, pointer_node_id)
+
+
+
+
+
 if __name__ == '__main__':
 
+    # ログレベル設定
+    # logger.setLevel(logging.INFO)
 
     def get_elements_from_file(file_path: Path) -> list:
         elements = []
@@ -372,20 +404,33 @@ if __name__ == '__main__':
     def main():
 
         # dataディレクトリにあるJSONファイルからエレメントを取得する
-        #data_file_name = 'fig-3-6.json'
-        data_file_name = 'fig-3-7.json'
 
-        data_file_path = data_dir.joinpath(data_file_name)
-        elements = get_elements_from_file(data_file_path)
+        data_file_names = ['fig-3-6.json', 'fig-3-7.json']
 
-        # 始点ノードのid
-        source_id = 's'
+        for data_file_name in data_file_names:
 
-        # ダイクストラ法で最短経路を計算する
-        calc_dijkstra(elements, source_id)
+            print(f"--- {data_file_name} ---")
 
-        # 結果を表示する
-        dump_nodes(elements)
+            data_file_path = data_dir.joinpath(data_file_name)
+            elements = get_elements_from_file(data_file_path)
+
+            # 始点ノードのid
+            source_id = 's'
+
+            # 終点ノードのid
+            target_id = 't'
+
+            # ダイクストラ法で最短経路を計算する
+            calc_dijkstra(elements, source_id)
+
+            # 結果を表示する
+            # dump_nodes(elements)
+
+            all_paths = []
+            get_result_paths(all_paths, [], elements, source_id, target_id)
+
+            print(all_paths)
+            print('')
 
         return 0
 
