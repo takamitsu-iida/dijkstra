@@ -1,6 +1,7 @@
 /* global iida */
 
-// define function iida.main()
+// define function iida.dijkstra()
+
 (function () {
 
   function get_minimum_weight_edges(edges) {
