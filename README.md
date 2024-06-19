@@ -38,9 +38,9 @@ JavaScript実装ではcytoscape.jsの描画機能を使ってグラフを可視�
 
 実際にJSONで定義したグラフのデータは以下のファイルを参照。
 
-> data/fig3-6.json
+> [data/fig3-6.json](https://github.com/takamitsu-iida/dijkstra/blob/master/data/fig-3-6.json)
 >
-> data/fig3-7.json
+> [data/fig3-7.json](https://github.com/takamitsu-iida/dijkstra/blob/master/data/fig-3-7.json)
 
 ダイクストラアルゴリズムについては以下の書籍を参考にした。いくつか手に取った本の中でこれが最も分かりやすかった。
 
