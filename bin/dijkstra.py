@@ -378,6 +378,46 @@ if __name__ == '__main__':
     # ログレベル設定
     # logger.setLevel(logging.INFO)
 
+
+    def convert_adj_matrix_to_elements(adj_matrix: list)->list:
+        # ノードのidは1始まりの数値
+        nodes = []
+        for i in range(len(adj_matrix)):
+            node_id = i + 1
+            node = {
+                'group': "nodes",
+                'data': {
+                    'id': f"{node_id}",
+                }
+            }
+            nodes.append(node)
+
+        edges = []
+        for i, row in enumerate(adj_matrix):
+            source_node_id = i + 1
+            for j in range(i+1, len(row)):
+                if (row[j] == 0):
+                    continue
+                target_node_id = j + 1
+                edge = {
+                    'group': "edges",
+                    'data': {
+                        'id': f"{source_node_id}_{target_node_id}",
+                        'source': f"{source_node_id}",
+                        'target': f"{target_node_id}",
+                        'weight': row[j]
+                    }
+                }
+                edges.append(edge)
+
+        elements = []
+        elements.extend(nodes)
+        elements.extend(edges)
+
+        return elements
+
+
+
     def get_elements_from_file(file_path: Path) -> list:
         elements = []
         with open(file_path) as f:
@@ -393,23 +433,27 @@ if __name__ == '__main__':
 
         return elements
 
+
     def dump_nodes(elements: list):
         nodes = get_nodes(elements)
         nodes = sorted(nodes, key=lambda x: x.get('data').get('_dijkstra').get('distance'))
         for node in nodes:
             print(f"{node.get('data').get('id')}, parent={node.get('data').get('_dijkstra').get('pointer_nodes')}, distance={node.get('data').get('_dijkstra').get('distance')}")
 
+
     def main():
 
-        # dataディレクトリにあるJSONファイルからエレメントを取得する
+        # 隣接行列が与えられてるなら、それをconvert_adj_matrix_to_elements()でエレメントに変換する
 
-        data_file_names = ['fig-3-6.json', 'fig-3-7.json']
+        # ここではdataディレクトリにあるJSONファイルを読み取ってエレメントを取得する
 
-        for data_file_name in data_file_names:
+        for data_file_name in [p.name for p in data_dir.iterdir() if p.is_file() and p.suffix == '.json']:
 
             print(f"--- {data_file_name} ---")
 
             data_file_path = data_dir.joinpath(data_file_name)
+
+            # オブジェクトの配列に変換
             elements = get_elements_from_file(data_file_path)
 
             # 始点ノードのid
@@ -424,6 +468,7 @@ if __name__ == '__main__':
             # 結果を表示する
             # dump_nodes(elements)
 
+            # target_idから遡るパスをすべて取得する
             all_paths = []
             get_result_paths(all_paths, [], elements, target_id)
 
