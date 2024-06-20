@@ -370,49 +370,6 @@ def get_result_paths(all_paths: list, current_paths: list, elements: list, from_
         get_result_paths(all_paths, current_paths, elements, pointer_node_id)
 
 
-#
-# DFS 深さ優先探索
-#
-
-def dfs(elements: list, start_id: str, target_id: str):
-    """
-    深さ優先探索を行い、start_idからtarget_idまでの経路を取得する
-    """
-    paths = []
-    depth_list = []
-    visited = set()
-
-    paths.append(start_id)
-    depth_list.append(start_id)
-    visited.add(start_id)
-
-    while len(depth_list) > 0:
-        current_depth = len(depth_list)
-
-        # 現在の深さのノードを取得
-        current_id = depth_list[len(depth_list) - 1]
-
-        # ゴールノードに到達したら終了
-        if current_id == target_id:
-            break
-
-        # 隣接ノードを取得して、順に探索する
-        neighbor_ids = get_neighborhood_ids(elements, current_id)
-
-        for neighbor_id in neighbor_ids:
-            if neighbor_id in visited:
-                continue
-            visited.add(neighbor_id)
-            depth_list.append(neighbor_id)
-            paths.append(neighbor_id)
-            break
-
-        # 深いところに行けなかったら、一つ前に戻って、未訪問のノードを探す
-        if current_depth == len(depth_list):
-            depth_list.pop()
-
-    return paths
-
 
 if __name__ == '__main__':
 
@@ -420,6 +377,7 @@ if __name__ == '__main__':
 
     # ログレベル設定
     # logger.setLevel(logging.INFO)
+
 
     def convert_adj_matrix_to_elements(adj_matrix: list)->list:
         # ノードのidは1始まりの数値
@@ -459,6 +417,7 @@ if __name__ == '__main__':
         return elements
 
 
+
     def get_elements_from_file(file_path: Path) -> list:
         elements = []
         with open(file_path) as f:
@@ -482,19 +441,7 @@ if __name__ == '__main__':
             print(f"{node.get('data').get('id')}, parent={node.get('data').get('_dijkstra').get('pointer_nodes')}, distance={node.get('data').get('_dijkstra').get('distance')}")
 
 
-    def test_dfs():
-        for data_file_name in [p.name for p in data_dir.iterdir() if p.is_file() and p.suffix == '.json']:
-            print(f"--- {data_file_name} ---")
-            data_file_path = data_dir.joinpath(data_file_name)
-            elements = get_elements_from_file(data_file_path)
-            source_id = 's'
-            target_id = 't'
-            paths = dfs(elements, source_id, 't')
-            print(paths)
-            print('')
-
-
-    def test_dijkstra():
+    def main():
 
         # 隣接行列が与えられてるなら、それをconvert_adj_matrix_to_elements()でエレメントに変換する
 
@@ -528,12 +475,6 @@ if __name__ == '__main__':
             print(all_paths)
             print('')
 
-        return 0
-
-
-    def main():
-        test_dfs()
-        # test_dijkstra()
         return 0
 
     # 実行
