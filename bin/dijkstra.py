@@ -390,112 +390,86 @@ def get_dijkstra_paths(all_paths: list, current_paths: list, elements: list, fro
 
 def dfs(elements: list, start_id: str, target_id='', is_directed=False) -> list:
     """
-    深さ優先探索を行い、start_idからtarget_idまでの経路を取得する
-    target_idが指定されなければ、start_idから到達可能なすべてのノードを取得する
+    深さ優先探索を行い、start_idからtarget_idまでの経路を返却する
+    pathsは [from, to] の形式で格納される
+    _dfsという名前の辞書をノードに追加してアップリンクノードを記録するので、別途、経路を遡ることもできる
     """
+
+    # target_idのエレメントを取得しておく
+    target_node = get_element_by_id(elements, target_id)
+
+    # たどった経路を格納するリスト
+    # [from, to] の形式で格納する
     paths = []
 
+    # これから探索していく予定のノードのidを格納するリスト
     todo_list = []
-    seen = set()
 
-    # 開始ノードを発見済みに初期化
-    seen.add(start_id)
+    # 探索の過程で発見したノードの一覧
+    visited = set()
 
-    # start_idに隣接しているノードを取得する
-    neighbor_node_ids = get_neighborhood_ids(elements, start_id, is_directed=is_directed)
+    #
+    # 初期化
+    #
 
-    # 見つけた隣接ノードを発見済みにした上で、探索対象として追加する
-    for neighbor_id in neighbor_node_ids:
-        seen.add(neighbor_id)
-        todo_list.append([start_id, neighbor_id])
+    # すべてのノードに_dfsという名前の辞書を追加しておく
+    for node in get_nodes(elements):
+        node.get('data')['_dfs'] = {}
 
-    # 探索対象がなくなるまで続ける
+    # start_idに関して、
+    # 発見済みにしてから、探索予定のリストに追加する
+    visited.add(start_id)
+    todo_list.append(start_id)
+
+    #
+    # 探索開始
+    #
+
     while len(todo_list) > 0:
 
-        # 探索対象に追加された最後のオブジェクトを取り出す
-        todo = todo_list.pop(-1)
+        # pop(0)で先頭から取り出すとBFS 幅優先探索になる
+        # pop(-1)で最後のノードを取り出すとDFS 深さ優先探索になる
+        current_id = todo_list.pop(-1)
 
-        # パスに追加
-        paths.append(todo)
+        if current_id == start_id:
+            # スタートノードの場合、記録すべき経路はまだ存在しない
+            pass
+        else:
+            # このcurrent_idの上位ノードを取り出して、[from, to]の形式でpathsに追加
+            current_node = get_element_by_id(elements, current_id)
+            pointer_node_id = current_node.get('data').get('_dfs').get('pointer_node')
+            paths.append([pointer_node_id, current_id])
 
-        # from_id = todo[0]
-        to_id = todo[1]
+        # current_idの先にいる隣接ノードを取得する
+        neighbor_node_ids = get_neighborhood_ids(elements, current_id, is_directed=is_directed)
 
-        # 隣接ノードを取得して、順に探索する
-        neighbor_node_ids = get_neighborhood_ids(elements, to_id, is_directed=is_directed)
-
-        # ゴールノードが見つかったら、探索を終了
+        # ゴールになるノード target_id をその中に見つけたら探索途中でも処理を終了する
         if target_id in neighbor_node_ids:
-            seen.add(target_id)
-            paths.append([to_id, target_id])
+            target_node.get('data').get('_dfs')['pointer_node'] = current_id
+
+            visited.add(target_id)
+            paths.append([current_id, target_id])
             break
 
-        for neighbor_id in neighbor_node_ids:
-            if neighbor_id in seen:
+        # current_idの隣接ノードに関して、
+        for neighbor_node_id in neighbor_node_ids:
+            # 発見済みのノードであれば（すでにtodo_listに入っているはずなので）ここでは何もしない
+            if neighbor_node_id in visited:
                 continue
 
-            # 見つけた隣接ノードを発見済みにした上で、探索対象として追加
-            seen.add(neighbor_id)
-            todo_list.append([to_id, neighbor_id])
+            # どこからたどり着いたか、pointer_nodeとして記録する
+            neighbor_node = get_element_by_id(elements, neighbor_node_id)
+            neighbor_node.get('data').get('_dfs')['pointer_node'] = current_id
+
+            # 発見済みにした上で、探索対象として追加
+            visited.add(neighbor_node_id)
+            todo_list.append(neighbor_node_id)
+
+    logger.info(f"visited={visited}")
+    logger.info(f"paths={paths}")
 
     return paths
 
-
-#
-# bfs 幅優先探索
-#
-
-def bfs(elements: list, start_id: str, target_id='', is_directed=False) -> list:
-    """
-    幅優先探索を行い、start_idからtarget_idまでの経路を取得する
-    target_idが指定されなければ、start_idから到達可能なすべてのノードを取得する
-    """
-    paths = []
-
-    todo_list = []
-    seen = set()
-
-    # 開始ノードを発見済みに初期化
-    seen.add(start_id)
-
-    # start_idに隣接しているノードを取得する
-    neighbor_node_ids = get_neighborhood_ids(elements, start_id, is_directed=is_directed)
-
-    # 見つけた隣接ノードを発見済みにした上で、探索対象として追加する
-    for neighbor_id in neighbor_node_ids:
-        seen.add(neighbor_id)
-        todo_list.append([start_id, neighbor_id])
-
-    # 探索対象がなくなるまで続ける
-    while len(todo_list) > 0:
-
-        # 探索対象に追加された最初のオブジェクトを取り出す
-        todo = todo_list.pop(0)
-
-        # パスに追加
-        paths.append(todo)
-
-        # from_id = todo[0]
-        to_id = todo[1]
-
-        # 隣接ノードを取得して、順に探索する
-        neighbor_node_ids = get_neighborhood_ids(elements, to_id, is_directed=is_directed)
-
-        # ゴールノードが見つかったら、探索を終了
-        if target_id in neighbor_node_ids:
-            seen.add(target_id)
-            paths.append([to_id, target_id])
-            break
-
-        for neighbor_id in neighbor_node_ids:
-            if neighbor_id in seen:
-                continue
-
-            # 見つけた隣接ノードを発見済みにした上で、探索対象として追加
-            seen.add(neighbor_id)
-            todo_list.append([to_id, neighbor_id])
-
-    return paths
 
 
 #
@@ -596,83 +570,87 @@ def search_augmenting_flow(residual: list, source_id: str, target_id: str) -> li
     """
     DFSを使って残余ネットワーク上でsource_idからtarget_idまでのパスを探す
     """
-    paths = []
 
+    # target_idのエレメントを取得しておく
+    target_node = get_element_by_id(residual, target_id)
+
+    # これから探索していく予定のノードのidを格納するリスト
     todo_list = []
-    seen = set()
 
-    # source_idを発見済みに初期化
-    seen.add(source_id)
+    # 探索の過程で発見したノードの一覧
+    visited = set()
 
-    # source_idに隣接しているノードを取得する
-    neighbor_node_ids = []
-    for edge in get_edges(residual):
-        if edge.get('data').get('current_weight') > 0 and edge.get('data').get('source') == source_id:
-            neighbor_node_ids.append(edge.get('data').get('target'))
+    #
+    # 初期化
+    #
 
-    # 見つけた隣接ノードを発見済みにした上で、探索対象として追加する
-    for neighbor_id in neighbor_node_ids:
-        seen.add(neighbor_id)
-        todo_list.append([source_id, neighbor_id])
+    # すべてのノードに_dfsという名前の辞書を追加しておく
+    for node in get_nodes(residual):
+        node.get('data')['_dfs'] = {}
 
-    # 探索対象がなくなるまで続ける
+    # source_idに関して、
+    # 発見済みにしてから、探索予定のリストに追加する
+    visited.add(source_id)
+    todo_list.append(source_id)
+
+    #
+    # 探索開始
+    #
+
     while len(todo_list) > 0:
 
-        # 探索対象に追加された最後のオブジェクトを取り出す
-        todo = todo_list.pop()
+        # DFS
+        # pop(-1)で最後のノードを取り出す
+        current_id = todo_list.pop(-1)
 
-        # from_id = todo[0]
-        to_id = todo[1]
-
-        # パスに追加
-        paths.append(todo)
-
-        # 隣接ノードを取得して、順に探索する
+        # current_idの先にいる隣接ノードを取得する
+        # ただし、current_weightが0のエッジは通らないものとして扱う
         neighbor_node_ids = []
         for edge in get_edges(residual):
-            if edge.get('data').get('current_weight') > 0 and edge.get('data').get('source') == to_id:
+            if edge.get('data').get('current_weight') > 0 and edge.get('data').get('source') == current_id:
                 neighbor_node_ids.append(edge.get('data').get('target'))
 
-        # 隣接ノードの中にゴールを見つけたら終了
+        # ゴールになるノード target_id をその中に見つけたら探索途中でも処理を終了する
         if target_id in neighbor_node_ids:
-            seen.add(target_id)
-            paths.append([to_id, target_id])
+            target_node.get('data').get('_dfs')['pointer_node'] = current_id
+            visited.add(target_id)
             break
 
-        # 未訪問の隣接ノードは次に探索する候補
-        for neighbor_id in neighbor_node_ids:
-            if neighbor_id in seen:
+        # current_idの隣接ノードに関して、
+        for neighbor_node_id in neighbor_node_ids:
+            # 発見済みのノードであれば（すでにtodo_listに入っているはずなので）ここでは何もしない
+            if neighbor_node_id in visited:
                 continue
 
+            # どこからたどり着いたか、pointer_nodeとして記録する
+            neighbor_node = get_element_by_id(residual, neighbor_node_id)
+            neighbor_node.get('data').get('_dfs')['pointer_node'] = current_id
+
             # 見つけた隣接ノードを発見済みにした上で、探索対象として追加
-            seen.add(neighbor_id)
-            todo_list.append([to_id, neighbor_id])
+            visited.add(neighbor_node_id)
+            todo_list.append(neighbor_node_id)
 
     # ゴールノードに到達していない場合は空のパスを返す
-    if target_id not in seen:
+    if target_id not in visited:
         return []
 
-    # パスを最適化するために、ツリーの余分なところをカットする
-    last_path = paths[-1]
-    optimized_paths = []
-    optimized_paths.append(last_path)
-    while True:
-        found = False
-        for p in reversed(paths):
-            if p[1] == last_path[0]:
-                optimized_paths.append(p)
-                last_path = p
-                found = True
-                break
-        if not found:
-            raise ValueError(f"last_path={last_path} is not found in paths.")
+    # ゴールノードに到達した場合、ゴールノードからスタートノードまでのパスを取得する
+    paths = []
 
-        if last_path[0] == source_id:
-            break
+    # target_idから開始して、
+    current_node_id = target_id
+    current_node = get_element_by_id(residual, current_node_id)
+    # スタートノードに到達するまで、pointer_nodeをたどっていく
+    while current_node_id != source_id:
+        pointer_node_id = current_node.get('data').get('_dfs').get('pointer_node')
+        pointer_node = get_element_by_id(residual, pointer_node_id)
+        paths.append([pointer_node_id, current_node_id])
+        # 次のノードに移動する
+        current_node_id = pointer_node_id
+        current_node = pointer_node
+    paths.reverse()
 
-    optimized_paths.reverse()
-    return optimized_paths
-
+    return paths
 
 def update_augmenting_network(augmenting_network: list, augmenting_paths: list):
     """
@@ -807,22 +785,6 @@ if __name__ == '__main__':
             print('')
 
 
-    def test_bfs():
-        for data_file_name in [p.name for p in data_dir.iterdir() if p.is_file() and p.suffix == '.json']:
-            print(f"--- {data_file_name} ---")
-            data_file_path = data_dir.joinpath(data_file_name)
-            elements = get_elements_from_file(data_file_path)
-            source_id = 's'
-            paths = bfs(elements, source_id)
-            print(f"bfs from {source_id}")
-            print(paths)
-            target_id = 't'
-            paths = bfs(elements, source_id, target_id)
-            print(f"bfs from {source_id} to {target_id}")
-            print(paths)
-            print('')
-
-
     def test_max_flow():
         # 図6.1
         elements = [
@@ -895,8 +857,8 @@ if __name__ == '__main__':
 
     def main():
         # test_dijkstra(is_directed=False)
+
         # test_dfs()
-        # test_bfs()
 
         test_max_flow()
 
