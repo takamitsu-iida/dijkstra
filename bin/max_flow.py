@@ -130,8 +130,8 @@ def get_element_by_id(elements: list, id: str):
 
 #
 # DFS 深さ優先探索
+# max_flowを求める際に残余パスを探すアルゴリズムにDFSを使うので、そのための練習
 #
-
 def dfs(elements: list, start_id: str, target_id='', is_directed=False) -> list:
     """
     深さ優先探索を行い、start_idからtarget_idまでの経路を返却する
@@ -254,7 +254,7 @@ def max_flow(elements: list, source_id: str, target_id: str) -> int:
     for edge in get_edges(residual_network):
         if edge.get('data').get('is_residual') == True:
             continue
-        print(f"[{edge.get('data').get('source')}, {edge.get('data').get('target')}], flow={edge.get('data').get('flow')} / {edge.get('data').get('weight')}")
+        print(f"[{edge.get('data').get('source')}, {edge.get('data').get('target')}] flow / weight = {edge.get('data').get('flow')} / {edge.get('data').get('weight')}")
 
     flow = 0
     for edge in get_edges(residual_network):
@@ -262,10 +262,6 @@ def max_flow(elements: list, source_id: str, target_id: str) -> int:
             flow += edge.get('data').get('flow')
 
     return flow
-
-
-
-
 
 
 def create_residual_network(elements: list, flow=0) -> list:
@@ -327,7 +323,9 @@ def create_residual_network(elements: list, flow=0) -> list:
 
 def search_augmenting_flow(residual: list, source_id: str, target_id: str) -> list:
     """
-    DFSを使って残余ネットワーク上でsource_idからtarget_idまでのパスを探す
+    残余ネットワーク上でsource_idからtarget_idまでのパスを探す
+    到達できるパスがあるかどうか、が重要なのであって、最短パスである必要はない
+    ここではDFS 深さ優先探索を用いる
     """
 
     # target_idのエレメントを取得しておく
@@ -344,7 +342,7 @@ def search_augmenting_flow(residual: list, source_id: str, target_id: str) -> li
     #
 
     # すべてのノードに_dfsという名前の辞書を追加しておく
-    # 後ほど、pointer_nodeを記録し、経路を遡れるようにする
+    # 後ほどpointer_nodeを記録し、経路をたどれるようにする
     for node in get_nodes(residual):
         node.get('data')['_dfs'] = {}
 
@@ -381,25 +379,27 @@ def search_augmenting_flow(residual: list, source_id: str, target_id: str) -> li
             if neighbor_node_id in visited:
                 continue
 
-            # どこからたどり着いたか、pointer_nodeとして記録する
+            # どこから到達するのか、pointer_nodeとして記録する
             neighbor_node = get_element_by_id(residual, neighbor_node_id)
             neighbor_node.get('data').get('_dfs')['pointer_node'] = current_id
 
-            # 見つけた隣接ノードを発見済みにした上で、探索対象として追加
+            # 見つけた隣接ノードを
+            # 発見済みにした上で、探索対象として追加
             visited.add(neighbor_node_id)
             todo_list.append(neighbor_node_id)
 
-    # ゴールノードに到達していない場合は空のパスを返す
+
+    # target_idに到達していない場合は空のパスを返す
     if target_id not in visited:
         return []
 
-    # ゴールノードに到達した場合、ゴールノードからスタートノードまでのパスを取得する
+    # 到達できた場合は、source_idからtarget_idまでのパスを取得して返却する
     paths = []
 
-    # ゴールノードから開始して、
+    # target_idから開始して、
     current_node_id = target_id
     current_node = get_element_by_id(residual, current_node_id)
-    # スタートノードに到達するまで、pointer_nodeをたどっていく
+    # source_idに到達するまで、pointer_nodeをたどっていく
     while current_node_id != source_id:
         pointer_node_id = current_node.get('data').get('_dfs').get('pointer_node')
         pointer_node = get_element_by_id(residual, pointer_node_id)
@@ -418,6 +418,7 @@ def search_augmenting_flow(residual: list, source_id: str, target_id: str) -> li
 def update_augmenting_network(augmenting_network: list, augmenting_paths: list):
     """
     残余ネットワーク上で、augmenting_paths上のエッジのフローを更新する
+    augmenting_pathsは [[from, to], [from, to]...] の形式で格納されている
     """
     # パス上のエッジのcurrent_weightの最小値（＝キャパシティ）を取得する
     min_weight = sys.maxsize
