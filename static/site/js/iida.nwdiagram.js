@@ -63,6 +63,8 @@
           'edge-text-rotation': "autorotate",
           'text-margin-x': 0,
           'text-margin-y': 0,
+          'source-arrow-shape': 'none',
+          'target-arrow-shape': 'none',
         }
       },
 
@@ -70,10 +72,26 @@
         selector: 'edge.highlighted',
         style: {
           'line-color': 'blue',
+          'source-arrow-color': 'blue',
+          'target-arrow-color': 'blue',
           'transition-property': 'line-color, target-arrow-color',
-          'transition-duration': '1.0s'
+          'transition-duration': '1.0s',
         }
-      }
+      },
+
+      {
+        selector: 'edge.highlighted.target_arrow',
+        style: {
+          'target-arrow-shape': 'triangle',
+        }
+      },
+
+      {
+        selector: 'edge.highlighted.source_arrow',
+        style: {
+          'source-arrow-shape': 'triangle',
+        }
+      },
 
     ]
 
@@ -127,6 +145,8 @@
         evt.preventDefault();
         cy.elements().forEach(element => {
           element.removeClass('highlighted');
+          element.removeClass('source_arrow');
+          element.removeClass('target_arrow');
         });
         animate_to_initial_position();
       });
@@ -153,6 +173,11 @@
       for (let edge_id of _dijkstra['pointer_edges']) {
         let edge = cy.getElementById(edge_id);
         edge.addClass('highlighted');
+        if (edge.source().id() === target_id) {
+          edge.addClass('source_arrow');
+        } else if (edge.target().id() === target_id) {
+          edge.addClass('target_arrow');
+        }
       }
       for (let node_id of _dijkstra['pointer_nodes']) {
         let node = cy.getElementById(node_id);
