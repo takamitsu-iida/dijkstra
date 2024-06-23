@@ -20,10 +20,14 @@ $ bin/dijkstra.py
 
 図3.7の場合は等コストの最短経路が3個存在する。
 
-本に記載されている解答と同じである。
+本に記載されている解答（下記の解図）と同じである。
 
 ![解図3.1](https://takamitsu-iida.github.io/dijkstra/asset/answer-fig-3-1.JPG)
 ![解図3.2](https://takamitsu-iida.github.io/dijkstra/asset/answer-fig-3-2.JPG)
+
+<br>
+
+## ライブデモ
 
 JavaScript実装ではcytoscape.jsの描画機能を使ってグラフを可視化しているので、結果がより分かりやすい。
 
