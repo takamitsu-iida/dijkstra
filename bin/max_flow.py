@@ -438,6 +438,7 @@ def update_augmenting_network(augmenting_network: list, augmenting_paths: list):
         if edge.get('data').get('current_weight') < min_weight:
             min_weight = edge.get('data').get('current_weight')
 
+    # 求まった最小値をパス上のエッジに適用してフローを増減させ、残余ネットワークを更新する
     for [from_id, to_id] in augmenting_paths:
         edge = None
         for e in get_edges(augmenting_network):
