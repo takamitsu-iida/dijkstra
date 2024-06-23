@@ -156,13 +156,15 @@ def calc_bellman_ford(elements: list, source_id: str, is_directed=False):
     # STEP2
     #
 
+    # たかだか|V| - 1 回の繰り返しで最短経路を求めることができる
+
     logger.info("start Bellman-Ford algorithm.")
     logger.info(f"node count={len(get_nodes(elements))}, edge count={len(get_edges(elements))}")
     logger.info(f"iteration will occur {len(get_nodes(elements)) - 1} times.")
 
     for i in range(len(get_nodes(elements)) - 1):
 
-        # 更新があったかどうかを示すフラグ
+        # 更新があったかどうかを示すフラグ、更新がなければ早期に終了する
         updated = False
 
         # すべてのエッジについて、
@@ -229,8 +231,6 @@ def calc_bellman_ford(elements: list, source_id: str, is_directed=False):
             # すべてのエッジを処理して、何も更新がなければ早期に終了
             logger.info(f"converged at {i + 1} iteration.")
             break
-
-
 
 
 def get_bellman_ford_paths(all_paths: list, current_paths: list, elements: list, from_id: str):
