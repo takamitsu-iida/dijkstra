@@ -262,6 +262,14 @@ def exists_unvisited_node(elements: list) -> bool:
 def calc_dijkstra(elements: list, source_id: str, is_directed=False):
 
     # ノードのdataに_dijkstraという名前の辞書を追加し、そこに計算結果を保存する
+    # この辞書には以下のキーが含まれる
+    #   - distance: 始点からの距離
+    #   - visited: 訪問済みかどうか（確定済みの集合Lに含まれるかどうか）
+    #   - pointer_nodes: このノードに至る最短経路の直前のノードのidのリスト（等コストの場合は複数）
+    #   - pointer_edges: このノードに至る最短経路のエッジのidのリスト（等コストの場合は複数）
+    #
+    # この関数ではsource_idを頂点とした最短経路の計算を行う
+    # 特定の場所にたどり着くための経路を知りたければget_dijkstra_paths()を利用する
 
     # 指定されたsource_idのオブジェクトを取り出しておく
     source = get_element_by_id(elements, source_id)
@@ -294,6 +302,9 @@ def calc_dijkstra(elements: list, source_id: str, is_directed=False):
     #
     # STEP2
     #
+
+    # このステップはSTEP3の処理の中で行うこともできる
+    # ここでは本に記載の通り、分けて記述している
 
     # 頂点sourceを集合 L に入れる、すなわちvisitedフラグを立てる
     source.get('data').get('_dijkstra')['visited'] = True
@@ -398,7 +409,20 @@ def get_dijkstra_paths(all_paths: list, current_paths: list, elements: list, fro
     from_idからアップリンク方向に遡る最短経路をすべて取得する
     """
 
-    # 再帰処理による変更影響を避けるためにコピーしておく
+    # all_paths: 最短経路のリストを格納するリスト
+    # current_paths: 現在の経路を格納するリスト
+    # elements: グラフデータ
+    # from_id: 終点のノードid
+
+    # ノードエレメントには、_dijkstraという名前の辞書が追加されている
+    # distance: 始点からそのノードまでの距離
+    # pointer_nodes: そのノードに至る最短経路の上位ノードのidのリスト（等コストの場合は複数）
+    # pointer_edges: そのノードに至る最短経路のエッジのidのリスト（等コストの場合は複数）
+    # これらの情報を使って最短経路を取得する
+
+    # current_pathsは再帰呼び出しのたびに変更されるので、
+    # この関数内で変更を加えると、呼び出し元に影響が出る
+    # そのため、current_pathsを変更する前にコピーしておく
     current_paths = current_paths.copy()
 
     # ターゲットノードを取得する
@@ -417,6 +441,7 @@ def get_dijkstra_paths(all_paths: list, current_paths: list, elements: list, fro
         all_paths.append(current_paths[::-1])
         return
 
+    # 複数のアップリンクがある場合は、それぞれに対して再帰処理を行う
     # from_idをアップリンクのノードに変更して再帰呼び出し
     for i, pointer_node_id in enumerate(pointer_nodes):
         logger.info(f"{i} pointer_node_id={pointer_node_id} current_paths={current_paths}")
