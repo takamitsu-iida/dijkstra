@@ -116,14 +116,26 @@ def get_element_by_id(elements: list, id: str):
             return ele
     return None
 
-
 #
 # Bellman-Fordアルゴリズム
+#
+# ディスタンスベクター型のルーティングアルゴリズムに使われている。
+# メリット
+#   - 実装が容易
+#   - 有向グラフ、無向グラフの両方に適用可能
+#   - 負の重みを持つエッジがあっても適用可能
+#   - ネットワークのループがあっても適用可能
+#   - (ノード数 -1) 以内の繰り返しで最短経路を求めることができる
+# デメリット
+#   - ノード数が多いと収束に時間がかかる。
 #
 
 def calc_bellman_ford(elements: list, source_id: str, is_directed=False):
 
     # ノードのdataに_bellman_fordという名前の辞書を追加し、そこに計算結果を保存する
+    # distance: 始点からそのノードまでの距離
+    # pointer_nodes: そのノードに至る最短経路の上位ノードのidのリスト（等コストの場合は複数）
+    # pointer_edges: そのノードに至る最短経路のエッジのidのリスト（等コストの場合は複数）
 
     # 指定されたsource_idのオブジェクトを取り出しておく
     source_node = get_element_by_id(elements, source_id)
@@ -205,30 +217,28 @@ def calc_bellman_ford(elements: list, source_id: str, is_directed=False):
                     target_node.get('data').get('_bellman_ford')['pointer_edges'].append(edge_id)
                 updated = True
 
-            # 有向グラフの場合は処理はここまで、次のエッジに進む
-            if is_directed:
-                continue
-
+            # 有向グラフの場合は処理はここまで
             # 無向グラフの場合は逆方向、すなわち target --> このエッジ --> source という経路も考慮する
-            if target_distance + edge_weight < source_distance:
-                # distanceを小さい値に更新して、
-                source_node.get('data').get('_bellman_ford')['distance'] = target_distance + edge_weight
-                # ポインタとして上位ノード target を指す
-                source_node.get('data').get('_bellman_ford')['pointer_nodes'] = [target_node_id]
-                source_node.get('data').get('_bellman_ford')['pointer_edges'] = [edge_id]
-                updated = True
-            elif target_distance + edge_weight == source_distance:
-                # 同じ距離の場合は、ポインタに追加する
-                if target_node_id not in source_node.get('data').get('_bellman_ford').get('pointer_nodes'):
-                    source_node.get('data').get('_bellman_ford')['pointer_nodes'].append(target_node_id)
-                if edge_id not in source_node.get('data').get('_bellman_ford').get('pointer_edges'):
-                    source_node.get('data').get('_bellman_ford')['pointer_edges'].append(edge_id)
-                updated = True
+            if is_directed == False:
+                if target_distance + edge_weight < source_distance:
+                    # distanceを小さい値に更新して、
+                    source_node.get('data').get('_bellman_ford')['distance'] = target_distance + edge_weight
+                    # ポインタとして上位ノード target を指す
+                    source_node.get('data').get('_bellman_ford')['pointer_nodes'] = [target_node_id]
+                    source_node.get('data').get('_bellman_ford')['pointer_edges'] = [edge_id]
+                    updated = True
+                elif target_distance + edge_weight == source_distance:
+                    # 同じ距離の場合は、ポインタに追加する
+                    if target_node_id not in source_node.get('data').get('_bellman_ford').get('pointer_nodes'):
+                        source_node.get('data').get('_bellman_ford')['pointer_nodes'].append(target_node_id)
+                    if edge_id not in source_node.get('data').get('_bellman_ford').get('pointer_edges'):
+                        source_node.get('data').get('_bellman_ford')['pointer_edges'].append(edge_id)
+                    updated = True
 
         if updated:
             logger.info(f"iteration {i + 1} completed with updated.")
         else:
-            # すべてのエッジを処理して、何も更新がなければ早期に終了
+            # 何も更新がなければ早期に終了
             logger.info(f"converged at {i + 1} iteration.")
             break
 
@@ -237,6 +247,17 @@ def get_bellman_ford_paths(all_paths: list, current_paths: list, elements: list,
     """
     from_idからアップリンク方向に遡る最短経路をすべて取得する
     """
+
+    # all_paths: 最短経路のリストを格納するリスト
+    # current_paths: 現在の経路を格納するリスト
+    # elements: グラフデータ
+    # from_id: 終点のノードid
+
+    # ノードエレメントには、_bellman_fordという名前の辞書が追加されている
+    # distance: 始点からそのノードまでの距離
+    # pointer_nodes: そのノードに至る最短経路の上位ノードのidのリスト（等コストの場合は複数）
+    # pointer_edges: そのノードに至る最短経路のエッジのidのリスト（等コストの場合は複数）
+    # これらの情報を使って最短経路を取得する
 
     # 再帰処理による変更影響を避けるためにコピーしておく
     current_paths = current_paths.copy()
@@ -257,6 +278,7 @@ def get_bellman_ford_paths(all_paths: list, current_paths: list, elements: list,
         all_paths.append(current_paths[::-1])
         return
 
+    # 複数のアップリンクがある場合は、それぞれに対して再帰処理を行う
     # from_idをアップリンクのノードに変更して再帰呼び出し
     for pointer_node_id in pointer_nodes:
         get_bellman_ford_paths(all_paths, current_paths, elements, pointer_node_id)
