@@ -58,6 +58,9 @@ logger.addHandler(stdout_handler)
 # ここからスクリプト
 #
 
+# 各ノードに付与するデータのキー
+DATA_KEY = '_max_flow'
+
 def is_valid_element(element: dict) -> bool:
     if 'data' not in element:
         return False
@@ -128,98 +131,13 @@ def get_element_by_id(elements: list, id: str):
             return ele
     return None
 
-#
-# DFS 深さ優先探索
-# max_flowを求める際に残余パスを探すアルゴリズムにDFSを使うので、そのための練習
-#
-def dfs(elements: list, start_id: str, target_id='', is_directed=False) -> list:
-    """
-    深さ優先探索を行い、start_idからtarget_idまでの経路を返却する
-    pathsは [from, to] の形式で格納される
-    _dfsという名前の辞書をノードに追加してアップリンクノードを記録するので、別途、経路を遡ることもできる
-    """
-
-    # target_idのエレメントを取得しておく
-    target_node = get_element_by_id(elements, target_id)
-
-    # たどった経路を格納するリスト
-    # [from, to] の形式で格納する
-    paths = []
-
-    # これから探索していく予定のノードのidを格納するリスト
-    todo_list = []
-
-    # 探索の過程で発見したノードの一覧
-    visited = set()
-
-    #
-    # 初期化
-    #
-
-    # すべてのノードに_dfsという名前の辞書を追加しておく
-    for node in get_nodes(elements):
-        node.get('data')['_dfs'] = {}
-
-    # start_idに関して、
-    # 発見済みにしてから、探索予定のリストに追加する
-    visited.add(start_id)
-    todo_list.append(start_id)
-
-    #
-    # 探索開始
-    #
-
-    while len(todo_list) > 0:
-
-        # pop(0)で先頭から取り出すとBFS 幅優先探索になる
-        # pop(-1)で最後のノードを取り出すとDFS 深さ優先探索になる
-        current_id = todo_list.pop(-1)
-
-        if current_id == start_id:
-            # スタートノードの場合、記録すべき経路はまだ存在しない
-            pass
-        else:
-            # このcurrent_idの上位ノードを取り出して、[from, to]の形式でpathsに追加
-            current_node = get_element_by_id(elements, current_id)
-            pointer_node_id = current_node.get('data').get('_dfs').get('pointer_node')
-            paths.append([pointer_node_id, current_id])
-
-        # current_idの先にいる隣接ノードを取得する
-        neighbor_node_ids = get_neighborhood_ids(elements, current_id, is_directed=is_directed)
-
-        # ゴールになるノード target_id をその中に見つけたら探索途中でも処理を終了する
-        if target_id in neighbor_node_ids:
-            target_node.get('data').get('_dfs')['pointer_node'] = current_id
-
-            visited.add(target_id)
-            paths.append([current_id, target_id])
-            break
-
-        # current_idの隣接ノードに関して、
-        for neighbor_node_id in neighbor_node_ids:
-            # 発見済みのノードであれば（すでにtodo_listに入っているはずなので）ここでは何もしない
-            if neighbor_node_id in visited:
-                continue
-
-            # どこからたどり着いたか、pointer_nodeとして記録する
-            neighbor_node = get_element_by_id(elements, neighbor_node_id)
-            neighbor_node.get('data').get('_dfs')['pointer_node'] = current_id
-
-            # 発見済みにした上で、探索対象として追加
-            visited.add(neighbor_node_id)
-            todo_list.append(neighbor_node_id)
-
-    logger.info(f"visited={visited}")
-    logger.info(f"paths={paths}")
-
-    return paths
 
 #
 # max_flow 最大フロー
 # Ford-Fulkerson法で最大流を求める
 # 同一ノード間に複数のエッジはないものとする（事前に結合しておく）
 #
-def max_flow(elements: list, source_id: str, target_id: str) -> int:
+def calc_max_flow(elements: list, source_id: str, target_id: str) -> list:
 
     # 残余ネットワークを作成する
     residual_network = create_residual_network(elements)
@@ -233,7 +151,7 @@ def max_flow(elements: list, source_id: str, target_id: str) -> int:
     # 残余ネットワーク上でsource_idからtarget_idまでのパスを探す
     augmenting_paths = search_augmenting_flow(residual_network, source_id, target_id)
 
-    print(f"iteration={iter}, augmenting_paths={augmenting_paths}")
+    logger.info(f"iteration={iter}, augmenting_paths={augmenting_paths}")
 
     while len(augmenting_paths) > 0:
 
@@ -247,21 +165,27 @@ def max_flow(elements: list, source_id: str, target_id: str) -> int:
         # 残余ネットワーク上でsource_idからtarget_idまでのパスを探す
         augmenting_paths = search_augmenting_flow(residual_network, source_id, target_id)
 
-        print(f"iteration={iter}, augmenting_paths={augmenting_paths}")
+        logger.info(f"iteration={iter}, augmenting_paths={augmenting_paths}")
 
-    print("\n--- flow ---")
+    return residual_network
 
-    for edge in get_edges(residual_network):
+
+def show_flow(elements: list, source_id: str):
+    # 各エッジを流れるフローを表示
+    print("\n--- flow on each edge---")
+    for edge in get_edges(elements):
         if edge.get('data').get('is_residual') == True:
             continue
         print(f"[{edge.get('data').get('source')}, {edge.get('data').get('target')}] flow / weight = {edge.get('data').get('flow')} / {edge.get('data').get('weight')}")
 
     flow = 0
-    for edge in get_edges(residual_network):
+    for edge in get_edges(elements):
         if edge.get('data').get('source') == source_id:
             flow += edge.get('data').get('flow')
 
-    return flow
+    print(f"\n--- total flow from {source_id} ---")
+    print(f"{flow}")
+
 
 
 def create_residual_network(elements: list, flow=0) -> list:
@@ -320,7 +244,6 @@ def create_residual_network(elements: list, flow=0) -> list:
     return residual
 
 
-
 def search_augmenting_flow(residual: list, source_id: str, target_id: str) -> list:
     """
     残余ネットワーク上でsource_idからtarget_idまでのパスを探す
@@ -341,10 +264,10 @@ def search_augmenting_flow(residual: list, source_id: str, target_id: str) -> li
     # 初期化
     #
 
-    # すべてのノードに_dfsという名前の辞書を追加しておく
+    # すべてのノードに'_max_flow'という名前の辞書を追加しておく(DATA_KEYは'_max_flow'を指す)
     # 後ほどpointer_nodeを記録し、経路をたどれるようにする
     for node in get_nodes(residual):
-        node.get('data')['_dfs'] = {}
+        node.get('data')[DATA_KEY] = {}
 
     # source_idに関して、
     # 発見済みにしてから、探索予定のリストに追加する
@@ -369,7 +292,7 @@ def search_augmenting_flow(residual: list, source_id: str, target_id: str) -> li
 
         # ゴールになるノード target_id をその中に見つけたら探索途中でも処理を終了する
         if target_id in neighbor_node_ids:
-            target_node.get('data').get('_dfs')['pointer_node'] = current_id
+            target_node.get('data').get(DATA_KEY)['pointer_node'] = current_id
             visited.add(target_id)
             break
 
@@ -381,13 +304,12 @@ def search_augmenting_flow(residual: list, source_id: str, target_id: str) -> li
 
             # どこから到達するのか、pointer_nodeとして記録する
             neighbor_node = get_element_by_id(residual, neighbor_node_id)
-            neighbor_node.get('data').get('_dfs')['pointer_node'] = current_id
+            neighbor_node.get('data').get(DATA_KEY)['pointer_node'] = current_id
 
             # 見つけた隣接ノードを
             # 発見済みにした上で、探索対象として追加
             visited.add(neighbor_node_id)
             todo_list.append(neighbor_node_id)
-
 
     # target_idに到達していない場合は空のパスを返す
     if target_id not in visited:
@@ -401,7 +323,7 @@ def search_augmenting_flow(residual: list, source_id: str, target_id: str) -> li
     current_node = get_element_by_id(residual, current_node_id)
     # source_idに到達するまで、pointer_nodeをたどっていく
     while current_node_id != source_id:
-        pointer_node_id = current_node.get('data').get('_dfs').get('pointer_node')
+        pointer_node_id = current_node.get('data').get(DATA_KEY).get('pointer_node')
         pointer_node = get_element_by_id(residual, pointer_node_id)
         # どこから、どこに向かうか、[from, to]の形式で記録する
         paths.append([pointer_node_id, current_node_id])
@@ -468,9 +390,7 @@ def update_augmenting_network(augmenting_network: list, augmenting_paths: list):
 if __name__ == '__main__':
 
     # ログレベル設定
-    # logger.setLevel(logging.INFO)
-
-    import json
+    logger.setLevel(logging.INFO)
 
     # 図6.1
     fig_6_1_elements = [
@@ -500,41 +420,23 @@ if __name__ == '__main__':
         { 'group': 'edges', 'data': { 'id': 'G_t', 'source': 'G', 'target': 't', 'weight': 5 } }
     ]
 
-    def test_dfs():
-        print("--- Fig6.1 ---")
-        elements = fig_6_1_elements
-        print(json.dumps(elements, indent=2))
-        print('')
-
-        source_id = 's'
-        paths = dfs(elements, source_id)
-        print(f"dfs from {source_id}")
-        print(paths)
-        print('')
-
-        target_id = 't'
-        paths = dfs(elements, source_id, target_id)
-        print(f"dfs from {source_id} to {target_id}")
-        print(paths)
-        print('')
+    import json
 
     def test_max_flow():
-        print("--- Fig6.1 ---")
         elements = fig_6_1_elements
-        print(json.dumps(elements, indent=2))
-        print('')
-
         source_id = 's'
         target_id = 't'
-        flow = max_flow(elements, source_id, target_id)
-        print(f"--- max flow from {source_id} to {target_id} ---")
-        print(f"{flow}")
+        residual_network = calc_max_flow(elements, source_id, target_id)
 
+        print("--- Fig6.1 residual network ---")
+        print(json.dumps(residual_network, indent=2))
+        print('')
+
+        show_flow(residual_network, source_id)
+        print('')
 
     def main():
-        #test_dfs()
         test_max_flow()
-
         return 0
 
     # 実行
