@@ -2,12 +2,8 @@
 
 # グラフのデータ構造はcytoscape.jsと同様の形式であることを前提とする
 
-# DFSを用いてsourceからtargetへの経路を探索し、通過した経路を求める
-# targetを指定しなければ、sourceから到達可能なすべてのノードを探索する
-
-# dfsとbfsはアルゴリズムとしては同じもので、探索の順番が異なるだけである。
-# このスクリプトではtodo_listに探索予定のノードを記録しており、
-# そこから取り出す順番を変えることで、幅優先探索（bfs）を変えることができる。
+# DFSを用いて閉路検出を行う
+# クラスカル法やプリム法などの最小全域木を求めるアルゴリズムでは閉路の検出を必要とするので、そのための関数を提供する
 
 #
 # 標準ライブラリのインポート
@@ -138,25 +134,18 @@ def get_element_by_id(elements: list, id: str):
     return None
 
 #
-# DFS 深さ優先探索
+# 深さ優先探索(DFS)で閉域路を検出する
 #
 
-def dfs(elements: list, start_id: str, target_id=None, is_directed=False) -> list:
+def cycle_detect(elements: list, start_id: str, is_directed=False) -> bool:
     """
-    深さ優先探索を行い、start_idからtarget_idまでの経路を返却する。
-    pathsは [from, to] の形式で格納される。
-    '_dfs'という名前の辞書をノードに追加してアップリンクノードを記録しているので
-    別途、経路を遡って取得することもできる。
+    深さ優先探索を行いながら閉路の有無を確認する
     """
 
-    # start_id, target_idそれぞれのエレメントを取得しておく
+    # start_idのエレメントを取得しておく
     start_node = get_element_by_id(elements, start_id)
     if not start_node:
         raise ValueError(f"start_id={start_id} not found in elements")
-
-    # たどった経路を格納するリスト
-    # [from, to] の形式で格納する
-    paths = []
 
     # これから探索していく予定のノードのidを格納するリスト
     todo_list = []
@@ -171,6 +160,9 @@ def dfs(elements: list, start_id: str, target_id=None, is_directed=False) -> lis
     # すべてのノードに_dfsという名前の辞書を追加しておく（DATA_KEYは'_dfs'を指す）
     for node in get_nodes(elements):
         node.get('data')[DATA_KEY] = {}
+
+    # start_nodeのcycleをFalseにしておく
+    start_node.get('data').get(DATA_KEY)['cycle'] = False
 
     # start_idを発見済みにしてから
     visited.add(start_id)
@@ -188,28 +180,14 @@ def dfs(elements: list, start_id: str, target_id=None, is_directed=False) -> lis
         # pop(0)で先頭から取り出すとBFS 幅優先探索になる
         current_id = todo_list.pop(-1)
         current_node = get_element_by_id(elements, current_id)
-        pointer_node_id = current_node.get('data').get(DATA_KEY).get('pointer_node')
 
-        if current_id == start_id:
-            # ループの初回でスタートノードを処理している場合は記録すべき経路はまだ存在しない
-            pass
-        else:
-            # このcurrent_idの上位ノードを取り出して、[from, to]の形式でpathsに追加
-            paths.append([pointer_node_id, current_id])
+        logger.info(f"current_id={current_id}")
+
+        # pointer_node_idは、current_idのノードにたどり着く一つ前のノードのidを指す
+        pointer_node_id = current_node.get('data').get(DATA_KEY).get('pointer_node')
 
         # current_idの先にいる隣接ノードを取得する
         neighbor_node_ids = get_neighborhood_ids(elements, current_id, is_directed=is_directed)
-
-        # ゴールになるノード target_id をその中に見つけたら探索途中でも処理を終了する
-        if target_id and target_id in neighbor_node_ids:
-            target_node = get_element_by_id(elements, target_id)
-            target_node.get('data').get(DATA_KEY)['pointer_node'] = current_id
-
-            # 発見済みにしておくが、これで終了するので探索対象には追加しない
-            visited.add(target_id)
-
-            paths.append([current_id, target_id])
-            break
 
         # current_idの隣接ノードに関して、
         for neighbor_node_id in neighbor_node_ids:
@@ -217,11 +195,14 @@ def dfs(elements: list, start_id: str, target_id=None, is_directed=False) -> lis
             if neighbor_node_id == pointer_node_id:
                 continue
 
-            # 隣接ノードがすでに発見済みのノードであれば（すでにtodo_listに入っているはずなので）探索の観点では何もしなくてよい
+            # 隣接ノードがすでに発見済みのノード、ということはサイクル（閉路）を検出した、ということなので、それ以上の探索を中止する
             if neighbor_node_id in visited:
-                continue
+                logger.info(f"cycle detected, {neighbor_node_id} is already visited.")
+                start_node.get('data').get(DATA_KEY)['cycle'] = True
+                break
 
-            # 隣接ノードが未発見であれば、どこからたどり着いたのかをpointer_nodeに記録する
+            # 未発見のノードであれば、
+            # どこからたどり着いたのかを、pointer_nodeに記録する
             neighbor_node = get_element_by_id(elements, neighbor_node_id)
             neighbor_node.get('data').get(DATA_KEY)['pointer_node'] = current_id
 
@@ -229,10 +210,11 @@ def dfs(elements: list, start_id: str, target_id=None, is_directed=False) -> lis
             visited.add(neighbor_node_id)
             todo_list.append(neighbor_node_id)
 
-    logger.info(f"visited={visited}")
-    logger.info(f"paths={paths}")
+        # サイクルが検出されたら、それ以降の探索を中止する
+        if start_node.get('data').get(DATA_KEY).get('cycle') == True:
+            break
 
-    return paths
+    return start_node.get('data').get(DATA_KEY).get('cycle')
 
 
 if __name__ == '__main__':
@@ -240,56 +222,48 @@ if __name__ == '__main__':
     # ログレベル設定
     logger.setLevel(logging.INFO)
 
-    import json
+    def test_cycle_detection():
 
-    # 図6.1
-    fig_6_1_elements = [
-        { 'group': 'nodes', 'data': { 'id': 's' } },
-        { 'group': 'nodes', 'data': { 'id': 'A' } },
-        { 'group': 'nodes', 'data': { 'id': 'B' } },
-        { 'group': 'nodes', 'data': { 'id': 'C' } },
-        { 'group': 'nodes', 'data': { 'id': 'D' } },
-        { 'group': 'nodes', 'data': { 'id': 'E' } },
-        { 'group': 'nodes', 'data': { 'id': 'F' } },
-        { 'group': 'nodes', 'data': { 'id': 'G' } },
-        { 'group': 'nodes', 'data': { 'id': 't' } },
-        { 'group': 'edges', 'data': { 'id': 's_A', 'source': 's', 'target': 'A', 'weight': 5 } },
-        { 'group': 'edges', 'data': { 'id': 's_B', 'source': 's', 'target': 'B', 'weight': 7 } },
-        { 'group': 'edges', 'data': { 'id': 'A_C', 'source': 'A', 'target': 'C', 'weight': 8 } },
-        { 'group': 'edges', 'data': { 'id': 'A_B', 'source': 'A', 'target': 'B', 'weight': 3 } },
-        { 'group': 'edges', 'data': { 'id': 'B_D', 'source': 'B', 'target': 'D', 'weight': 3 } },
-        { 'group': 'edges', 'data': { 'id': 'B_E', 'source': 'B', 'target': 'E', 'weight': 2 } },
-        { 'group': 'edges', 'data': { 'id': 'C_D', 'source': 'C', 'target': 'D', 'weight': 4 } },
-        { 'group': 'edges', 'data': { 'id': 'C_F', 'source': 'C', 'target': 'F', 'weight': 2 } },
-        { 'group': 'edges', 'data': { 'id': 'D_F', 'source': 'D', 'target': 'F', 'weight': 1 } },
-        { 'group': 'edges', 'data': { 'id': 'D_t', 'source': 'D', 'target': 't', 'weight': 4 } },
-        { 'group': 'edges', 'data': { 'id': 'D_G', 'source': 'D', 'target': 'G', 'weight': 4 } },
-        { 'group': 'edges', 'data': { 'id': 'E_D', 'source': 'E', 'target': 'D', 'weight': 3 } },
-        { 'group': 'edges', 'data': { 'id': 'E_G', 'source': 'E', 'target': 'G', 'weight': 3 } },
-        { 'group': 'edges', 'data': { 'id': 'F_t', 'source': 'F', 'target': 't', 'weight': 7 } },
-        { 'group': 'edges', 'data': { 'id': 'G_t', 'source': 'G', 'target': 't', 'weight': 5 } }
-    ]
+        loop_1 = [
+            { 'group': 'nodes', 'data': { 'id': 's' } },
+            { 'group': 'nodes', 'data': { 'id': 'A' } },
+            { 'group': 'nodes', 'data': { 'id': 'B' } },
+            { 'group': 'nodes', 'data': { 'id': 'C' } },
+            { 'group': 'nodes', 'data': { 'id': 'D' } },
+            { 'group': 'nodes', 'data': { 'id': 't' } },
+            { 'group': 'edges', 'data': { 'id': 's_A', 'source': 's', 'target': 'A' } },
+            { 'group': 'edges', 'data': { 'id': 's_B', 'source': 's', 'target': 'B' } },
+            { 'group': 'edges', 'data': { 'id': 'A_C', 'source': 'A', 'target': 'C' } },
+            { 'group': 'edges', 'data': { 'id': 'B_D', 'source': 'B', 'target': 'D' } },
+            { 'group': 'edges', 'data': { 'id': 'C_t', 'source': 'C', 'target': 't' } },
+            { 'group': 'edges', 'data': { 'id': 'D_t', 'source': 'D', 'target': 't' } },
+        ]
 
-    def test_dfs():
-        print("--- Fig6.1 ---")
-        elements = fig_6_1_elements
-        print(json.dumps(elements, indent=2))
-        print('')
+        loop_2 = [
+            { 'group': 'nodes', 'data': { 'id': 's' } },
+            { 'group': 'nodes', 'data': { 'id': 'A' } },
+            { 'group': 'nodes', 'data': { 'id': 'B' } },
+            { 'group': 'nodes', 'data': { 'id': 'C' } },
+            { 'group': 'nodes', 'data': { 'id': 't' } },
+            { 'group': 'edges', 'data': { 'id': 's_A', 'source': 's', 'target': 'A' } },
+            { 'group': 'edges', 'data': { 'id': 'A_C', 'source': 'A', 'target': 'C' } },
+            { 'group': 'edges', 'data': { 'id': 'A_B', 'source': 'A', 'target': 'B' } },
+            { 'group': 'edges', 'data': { 'id': 'B_C', 'source': 'B', 'target': 'C' } },
+            { 'group': 'edges', 'data': { 'id': 'C_t', 'source': 'C', 'target': 't' } },
+        ]
 
-        source_id = 's'
-        paths = dfs(elements, source_id)
-        print(f"dfs from {source_id}")
-        print(paths)
-        print('')
+        print("--- Loop1 ---")
+        # print(json.dumps(loop_1, indent=2) + "\n")
+        cycle = cycle_detect(loop_1, 's')
+        print(f"cycle={cycle} \n")
 
-        target_id = 't'
-        paths = dfs(elements, source_id, target_id)
-        print(f"dfs from {source_id} to {target_id}")
-        print(paths)
+        print("--- Loop2 ---")
+        cycle = cycle_detect(loop_2, 's')
+        print(f"cycle={cycle} \n")
         print('')
 
     def main():
-        test_dfs()
+        test_cycle_detection()
         return 0
 
     # 実行
