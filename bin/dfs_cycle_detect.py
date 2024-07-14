@@ -1,65 +1,8 @@
 #!/usr/bin/env python
 
-# グラフのデータ構造はcytoscape.jsと同様の形式であることを前提とする
+# グラフのデータ構造はcytoscape.jsと同様の形式を想定しています。
 
-# DFSを用いて閉路検出を行う
-# クラスカル法やプリム法などの最小全域木を求めるアルゴリズムでは閉路の検出を必要とするので、そのための関数を提供する
-
-#
-# 標準ライブラリのインポート
-#
-import logging
-import sys
-
-from pathlib import Path
-
-# このファイルへのPathオブジェクト
-app_path = Path(__file__)
-
-# このファイルの名前から拡張子を除いてプログラム名を得る
-app_name = app_path.stem
-
-# アプリケーションのホームディレクトリはこのファイルからみて一つ上
-app_home = app_path.parent.joinpath('..').resolve()
-
-# データ用ディレクトリ
-data_dir = app_home.joinpath('data')
-
-#
-# ログ設定
-#
-
-# ログファイルの名前
-log_file = app_path.with_suffix('.log').name
-
-# ログファイルを置くディレクトリ
-log_dir = app_home.joinpath('log')
-log_dir.mkdir(exist_ok=True)
-
-# ログファイルのパス
-log_path = log_dir.joinpath(log_file)
-
-# ロガーを取得する
-logger = logging.getLogger(__name__)
-
-# フォーマット
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-
-# 標準出力へのハンドラ
-stdout_handler = logging.StreamHandler(sys.stdout)
-stdout_handler.setFormatter(formatter)
-stdout_handler.setLevel(logging.INFO)
-logger.addHandler(stdout_handler)
-
-# ログファイルのハンドラ
-#file_handler = logging.FileHandler(log_path, 'a+')
-#file_handler.setFormatter(formatter)
-#file_handler.setLevel(logging.INFO)
-#logger.addHandler(file_handler)
-
-#
-# ここからスクリプト
-#
+# DFS深さ優先探索を用いて閉路検出を行うスクリプトです。
 
 DATA_KEY = '_dfs'
 
@@ -137,15 +80,19 @@ def get_element_by_id(elements: list, id: str):
 # 深さ優先探索(DFS)で閉域路を検出する
 #
 
-def cycle_detect(elements: list, start_id: str, is_directed=False) -> bool:
+def cycle_detect(elements: list, start_id: str='', is_directed=False) -> bool:
     """
-    深さ優先探索を行いながら閉路の有無を確認する
+    深さ優先で探索しながら閉路の有無を確認する
     """
 
-    # start_idのエレメントを取得しておく
-    start_node = get_element_by_id(elements, start_id)
-    if not start_node:
-        raise ValueError(f"start_id={start_id} not found in elements")
+    # start_idのエレメントを取得
+    if not start_id:
+        start_node = get_nodes(elements)[0]
+        start_id = start_node.get('data').get('id')
+    else:
+        start_node = get_element_by_id(elements, start_id)
+        if not start_node:
+            raise ValueError(f"start_id={start_id} not found in elements")
 
     # これから探索していく予定のノードのidを格納するリスト
     todo_list = []
@@ -181,8 +128,6 @@ def cycle_detect(elements: list, start_id: str, is_directed=False) -> bool:
         current_id = todo_list.pop(-1)
         current_node = get_element_by_id(elements, current_id)
 
-        logger.info(f"current_id={current_id}")
-
         # pointer_node_idは、current_idのノードにたどり着く一つ前のノードのidを指す
         pointer_node_id = current_node.get('data').get(DATA_KEY).get('pointer_node')
 
@@ -197,7 +142,6 @@ def cycle_detect(elements: list, start_id: str, is_directed=False) -> bool:
 
             # 隣接ノードがすでに発見済みのノード、ということはサイクル（閉路）を検出した、ということなので、それ以上の探索を中止する
             if neighbor_node_id in visited:
-                logger.info(f"cycle detected, {neighbor_node_id} is already visited.")
                 start_node.get('data').get(DATA_KEY)['cycle'] = True
                 break
 
@@ -219,8 +163,7 @@ def cycle_detect(elements: list, start_id: str, is_directed=False) -> bool:
 
 if __name__ == '__main__':
 
-    # ログレベル設定
-    logger.setLevel(logging.INFO)
+    import sys
 
     def test_cycle_detection():
 
@@ -254,11 +197,11 @@ if __name__ == '__main__':
 
         print("--- Loop1 ---")
         # print(json.dumps(loop_1, indent=2) + "\n")
-        cycle = cycle_detect(loop_1, 's')
+        cycle = cycle_detect(loop_1)
         print(f"cycle={cycle} \n")
 
         print("--- Loop2 ---")
-        cycle = cycle_detect(loop_2, 's')
+        cycle = cycle_detect(loop_2)
         print(f"cycle={cycle} \n")
         print('')
 

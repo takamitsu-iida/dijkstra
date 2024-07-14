@@ -1,7 +1,21 @@
 #!/usr/bin/env python
 
-# グラフのデータ構造はcytoscape.jsと同様の形式であることを前提とする
-# dataフォルダに格納しているjsonデータを参照
+# グラフのデータ構造はcytoscape.jsと同様の形式を想定しています。
+# テストで用いているグラフはdataフォルダにjson形式で格納してあります。
+
+# ダイクストラ法は、始点から各ノードへの最短経路を求めるアルゴリズムです。
+# ルーティングプロトコルのOSPFやISISにも使われています。
+
+# このスクリプトではsourceからtargetに至る最短経路をリストで返します。
+# イコールコストマルチパスに対応していますので、複数の最短経路が返ることがあります。
+# 以下の実行例では、fig-3-7.jsonの解が3つ返ってきています。
+#
+# --- fig-3-6.json ---
+# [['s', 'A', 'E', 'C', 'F', 't']]
+#
+# --- fig-3-7.json ---
+# [['s', 'A', 'C', 't'], ['s', 'B', 'D', 't'], ['s', 'A', 'B', 'D', 't']]
+
 
 #
 # 標準ライブラリのインポート
@@ -337,8 +351,8 @@ def calc_dijkstra(elements: list, source_id: str, is_directed=False):
 
         # 2-2. vはポインタでsourceを指す
         # ポインタはノードだけでなくエッジも指すことにする
-        _dijkstra['pointer_nodes'] = [source_id]
-        _dijkstra['pointer_edges'] = edge_ids
+        _dijkstra['pointer_nodes'] = [source_id] # 配列として保存
+        _dijkstra['pointer_edges'] = edge_ids  # edge_idsはもともと配列
 
     #
     # 次のSTEP3の処理を、全ノードが集合Lに格納されるまで続ける

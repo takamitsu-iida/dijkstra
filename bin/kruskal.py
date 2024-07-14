@@ -2,20 +2,17 @@
 
 # グラフのデータ構造はcytoscape.jsと同様の形式を想定しています。
 
-# DFSを用いてsourceからtargetへの経路を探索し、通過した経路を求めます。
-# targetを指定しない場合、もしくはtargetに一致するノードが存在しなければ、sourceから到達可能なすべてのノードを探索します。
+# kruskal法は重み付き無向グラフの最小全域木を求めるアルゴリズムです。
+# 最小全域木は、ノード数-1のエッジを持ち、全てのノードが連結されている木です。
 
-# DFS深さ優先探索とBFS幅優先探索はアルゴリズムとしては同じです。
-# このスクリプトでは配列todo_listに探索予定のノードを記録していますが、
-# そこから取り出す方法を変えることで、DFSとBFSを切り替えられます。
+# 一般的には計算量を削減できる素集合データ構造（Union-Findデータ構造）を用いて閉路を確認します。
+# Union-Findについては別のスクリプトで実装します。
 
-# 実行結果は[from, to]の形式でパスのリストを返します。
-#
-# dfs from s
-# [['s', 'A'], ['A', 'C'], ['C', 'F'], ['F', 't'], ['t', 'G'], ['G', 'E'], ['C', 'D'], ['s', 'B']]
-#
-# dfs from s to t
-# [['s', 'A'], ['A', 'C'], ['C', 'F'], ['F', 't']]
+# ここではDFS深さ優先探索を用いて閉路を検知することにします。
+# 辺を選ぶたびに深さ優先探索を走らせますので計算量が多く、大規模なグラフではUnion-Findを使うべきです。
+
+# dfs_cycle_detect.pyからcycle_detect関数をインポートして利用します。
+from dfs_cycle_detect import cycle_detect
 
 #
 # 標準ライブラリのインポート
@@ -72,8 +69,6 @@ logger.addHandler(stdout_handler)
 #
 # ここからスクリプト
 #
-
-DATA_KEY = '_dfs'
 
 def is_valid_element(element: dict) -> bool:
     if 'data' not in element:
@@ -145,108 +140,63 @@ def get_element_by_id(elements: list, id: str):
             return ele
     return None
 
-#
-# DFS 深さ優先探索
-#
 
-def dfs(elements: list, start_id: str, target_id=None, is_directed=False) -> list:
+def get_elements_from_edge_list(all_elements, edge_list: list) -> list:
     """
-    深さ優先探索を行い、start_idからtarget_idまでの経路を返却する。
-    pathsは [from, to] の形式で格納される。
-    '_dfs'という名前の辞書をノードに追加してアップリンクノードを記録しているので
-    別途、経路を遡って取得することもできる。
+    edge_listで構成されるサブグラフのエレメントリストを返却する
     """
+    sub_elements = []
+    for edge in edge_list:
+        source_id = edge.get('data').get('source')
+        target_id = edge.get('data').get('target')
+        source = get_element_by_id(all_elements, source_id)
+        target = get_element_by_id(all_elements, target_id)
+        if source is not None and target is not None:
+            sub_elements.append(source)
+            sub_elements.append(target)
+            sub_elements.append(edge)
+    return sub_elements
 
-    # start_id, target_idそれぞれのエレメントを取得しておく
-    start_node = get_element_by_id(elements, start_id)
-    if not start_node:
-        raise ValueError(f"start_id={start_id} not found in elements")
 
-    # たどった経路を格納するリスト
-    # [from, to] の形式で格納する
-    paths = []
+#
+# Kruskal法による最小全域木の構築
+#
 
-    # これから探索していく予定のノードのidを格納するリスト
-    todo_list = []
+def kruskal(elements: list, is_directed=False) -> list:
 
-    # 探索の過程で発見したノードの一覧
-    visited = set()
+    # 最小全域木を構成するエッジのリスト
+    minimum_spanning_tree_edges = []
 
-    #
-    # 初期化
-    #
+    # エッジのリストを取得
+    edges = get_edges(elements)
 
-    # すべてのノードに_dfsという名前の辞書を追加しておく（DATA_KEYは'_dfs'を指す）
-    for node in get_nodes(elements):
-        node.get('data')[DATA_KEY] = {}
+    # エッジをweightが小さい順にソートする
+    edges.sort(key=lambda x: x.get('data').get('weight'))
 
-    # start_idを発見済みにしてから
-    visited.add(start_id)
+    # グラフのノードがすべて結合しているなら、ノードの数-1だけエッジが選ばれた時点でMSTは完成する
+    # 孤立したノードがいる場合もあるので、ここでは全エッジを検査することにする
+    while len(edges) > 0:
+        # コストが一番小さいエッジ、edgesリストの先頭を取り出す
+        edge = edges.pop(0)
+        logger.info(f"selected edge: {edge}")
 
-    # 探索予定のリストに追加する
-    todo_list.append(start_id)
+        # いったんこのエッジを解に加えて
+        minimum_spanning_tree_edges.append(edge)
 
-    #
-    # 探索開始
-    #
+        # そのグラフが閉路を持つかどうかをチェックする
+        eles = get_elements_from_edge_list(elements, minimum_spanning_tree_edges)
+        if cycle_detect(elements=eles, is_directed=is_directed):
+            # 閉路ができるなら、このエッジを解に含めてはいけないので取り除く
+            logger.info(f"Cycle detected. Removing edge: {edge}")
+            minimum_spanning_tree_edges.pop(-1)
 
-    while len(todo_list) > 0:
-
-        # pop(-1)で最後のノードを取り出すとDFS 深さ優先探索になる
-        # pop(0)で先頭から取り出すとBFS 幅優先探索になる
-        current_id = todo_list.pop(-1)
-        current_node = get_element_by_id(elements, current_id)
-        pointer_node_id = current_node.get('data').get(DATA_KEY).get('pointer_node')
-
-        if current_id == start_id:
-            # ループの初回でスタートノードを処理している場合は記録すべき経路はまだ存在しない
-            pass
-        else:
-            # このcurrent_idの上位ノードを取り出して、[from, to]の形式でpathsに追加
-            paths.append([pointer_node_id, current_id])
-
-        # current_idの先にいる隣接ノードを取得する
-        neighbor_node_ids = get_neighborhood_ids(elements, current_id, is_directed=is_directed)
-
-        # ゴールになるノード target_id をその中に見つけたら探索途中でも処理を終了する
-        if target_id and target_id in neighbor_node_ids:
-            target_node = get_element_by_id(elements, target_id)
-            target_node.get('data').get(DATA_KEY)['pointer_node'] = current_id
-
-            # 発見済みにしておくが、これで終了するので探索対象には追加しない
-            visited.add(target_id)
-
-            paths.append([current_id, target_id])
-            break
-
-        # current_idの隣接ノードに関して、
-        for neighbor_node_id in neighbor_node_ids:
-            # 隣接ノードのうち一つは必ずpointer_node_idになるので、それはスキップする
-            if neighbor_node_id == pointer_node_id:
-                continue
-
-            # 隣接ノードがすでに発見済みのノードであれば（すでにtodo_listに入っているはずなので）探索の観点では何もしなくてよい
-            if neighbor_node_id in visited:
-                continue
-
-            # 隣接ノードが未発見であれば、どこからたどり着いたのかをpointer_nodeに記録する
-            neighbor_node = get_element_by_id(elements, neighbor_node_id)
-            neighbor_node.get('data').get(DATA_KEY)['pointer_node'] = current_id
-
-            # 発見済みに変更した上で、探索対象として追加
-            visited.add(neighbor_node_id)
-            todo_list.append(neighbor_node_id)
-
-    logger.info(f"visited={visited}")
-    logger.info(f"paths={paths}")
-
-    return paths
+    return minimum_spanning_tree_edges
 
 
 if __name__ == '__main__':
 
     # ログレベル設定
-    # logger.setLevel(logging.INFO)
+    logger.setLevel(logging.INFO)
 
     import json
 
@@ -278,26 +228,20 @@ if __name__ == '__main__':
         { 'group': 'edges', 'data': { 'id': 'G_t', 'source': 'G', 'target': 't', 'weight': 5 } }
     ]
 
-    def test_dfs():
+    def test_kruscal():
         print("--- Fig6.1 ---")
         elements = fig_6_1_elements
-        print(json.dumps(elements, indent=2))
-        print('')
+        #print(json.dumps(elements, indent=2))
+        #print('')
 
-        source_id = 's'
-        paths = dfs(elements, source_id)
-        print(f"dfs from {source_id}")
-        print(paths)
-        print('')
-
-        target_id = 't'
-        paths = dfs(elements, source_id, target_id)
-        print(f"dfs from {source_id} to {target_id}")
-        print(paths)
-        print('')
+        edges = kruskal(elements)
+        print("--- Minimum Spanning Tree ---")
+        print(f"number of nodes: {len(get_nodes(elements))}")
+        print(f"number of MST edges: {len(edges)}")
+        print(json.dumps(edges, indent=2))
 
     def main():
-        test_dfs()
+        test_kruscal()
         return 0
 
     # 実行
