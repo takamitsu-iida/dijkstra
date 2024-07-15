@@ -6,19 +6,23 @@
 # 最小全域木は、ノード数-1のエッジを持ち、全てのノードが連結されている木です。
 
 # 一般的には計算量を削減できる素集合データ構造（Union-Findデータ構造）を用いて閉路を確認します。
-# Union-Findについては別のスクリプトで実装します。
+# Union-Findについては別のスクリプトunion_find.pyで実装します。
 
-# ここではDFS深さ優先探索を用いて閉路を検知することにします。
-# 辺を選ぶたびに深さ優先探索を走らせますので計算量が多く、大規模なグラフではUnion-Findを使うべきです。
+# ここではDFS深さ優先探索を用いて閉路を検知する場合と、Union-Findを用いて閉路を検知する場合、
+# 両方とも実装してみますが、実用上はUnion-Findを使うべきです。
 
 # dfs_cycle_detect.pyからcycle_detect関数をインポートして利用します。
 from dfs_cycle_detect import cycle_detect
+
+# union_find.pyからUnionFindDictクラスをインポートして利用します。
+from union_find import UnionFindDict
 
 #
 # 標準ライブラリのインポート
 #
 import logging
 import sys
+from collections import defaultdict
 
 from pathlib import Path
 
@@ -160,9 +164,9 @@ def get_elements_from_edge_list(all_elements, edge_list: list) -> list:
 
 #
 # Kruskal法による最小全域木の構築
+# DFSを用いて閉路を検知する
 #
-
-def kruskal(elements: list, is_directed=False) -> list:
+def kruskal_dfs(elements: list, is_directed=False) -> list:
 
     # 最小全域木を構成するエッジのリスト
     minimum_spanning_tree_edges = []
@@ -174,7 +178,7 @@ def kruskal(elements: list, is_directed=False) -> list:
     edges.sort(key=lambda x: x.get('data').get('weight'))
 
     # グラフのノードがすべて結合しているなら、ノードの数-1だけエッジが選ばれた時点でMSTは完成する
-    # 孤立したノードがいる場合もあるので、ここでは全エッジを検査することにする
+    # しかしながら、孤立したノードがいる場合もあるので、ここでは全エッジを検査することにする
     while len(edges) > 0:
         # コストが一番小さいエッジ、edgesリストの先頭を取り出す
         edge = edges.pop(0)
@@ -192,13 +196,53 @@ def kruskal(elements: list, is_directed=False) -> list:
 
     return minimum_spanning_tree_edges
 
+#
+# Kruskal法による最小全域木の構築
+# Union-Findを用いて閉路を検知する
+#
+def kruskal(elements: list, is_directed=False) -> list:
+
+    # 最小全域木を構成するエッジのリスト
+    minimum_spanning_tree_edges = []
+
+    # エッジのリストを取得
+    edges = get_edges(elements)
+
+    # エッジをweightが小さい順にソートする
+    edges.sort(key=lambda x: x.get('data').get('weight'))
+
+    # Union-Findデータ構造を初期化
+    uf = UnionFindDict()
+
+    # グラフのノードがすべて結合しているなら、ノードの数-1だけエッジが選ばれた時点でMSTは完成する
+    # しかしながら、孤立したノードがいる場合もあるので、ここでは全エッジを検査することにする
+    while len(edges) > 0:
+        # コストが一番小さいエッジ、edgesリストの先頭を取り出す
+        edge = edges.pop(0)
+        logger.info(f"selected edge: {edge}")
+
+        # このエッジのsourceとtargetをUnion-Findに登録する
+        source_id = edge.get('data').get('source')
+        target_id = edge.get('data').get('target')
+        uf.insert(source_id)
+        uf.insert(target_id)
+        if uf.is_same(source_id, target_id):
+            # source_idとtarget_idがすでに同じグループに属しているということは、このエッジを加えると閉路ができる
+            logger.info(f"Cycle detected. edge: {edge}")
+        else:
+            # source_idとtarget_idが同じグループに属していないなら、
+            # この２つを同じグループに統合して、
+            uf.union(source_id, target_id)
+            # このエッジを解に加える
+            minimum_spanning_tree_edges.append(edge)
+
+    return minimum_spanning_tree_edges
+
 
 if __name__ == '__main__':
 
     # ログレベル設定
     logger.setLevel(logging.INFO)
-
-    import json
 
     # 図6.1
     fig_6_1_elements = [
@@ -234,11 +278,17 @@ if __name__ == '__main__':
         #print(json.dumps(elements, indent=2))
         #print('')
 
-        edges = kruskal(elements)
-        print("--- Minimum Spanning Tree ---")
+        edges = kruskal_dfs(elements)
+        print("--- Minimum Spanning Tree by DFS cycle_detect---")
         print(f"number of nodes: {len(get_nodes(elements))}")
         print(f"number of MST edges: {len(edges)}")
-        print(json.dumps(edges, indent=2))
+        print([edge.get('data').get('id') for edge in edges])
+
+        edges = kruskal(elements)
+        print("--- Minimum Spanning Tree by Union-Find cycle_detect---")
+        print(f"number of nodes: {len(get_nodes(elements))}")
+        print(f"number of MST edges: {len(edges)}")
+        print([edge.get('data').get('id') for edge in edges])
 
     def main():
         test_kruscal()
