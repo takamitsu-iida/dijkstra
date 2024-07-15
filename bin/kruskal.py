@@ -22,7 +22,6 @@ from union_find import UnionFindDict
 #
 import logging
 import sys
-from collections import defaultdict
 
 from pathlib import Path
 
