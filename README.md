@@ -6,13 +6,13 @@
 
 > [!NOTE]
 >
-> Pythonで実装したものをJavaScriptに移植してますので、実装メモは[Pythonスクリプト](/bin/dijkstra.py)の方が豊富です。
+> Pythonで実装したものをJavaScriptに移植してますので、実装メモは[Pythonスクリプト dijkstra.py](/bin/dijkstra.py)の方が豊富です。
 
 <br>
 
 > [!NOTE]
 >
-> Pythonではダイクストラ法以外にもA*や最大流(max flow)、ベルマンフォード法（bellman-ford）、クラスカル法等を実装しています。
+> Pythonではダイクストラ法以外にもA*や最大流(Ford-Fulkerson法)、ベルマンフォード法、クラスカル法、プリム法などを実装しています。
 
 <br>
 
