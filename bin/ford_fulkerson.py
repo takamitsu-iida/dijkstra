@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
 # グラフのデータ構造はcytoscape.jsと同様の形式を想定しています。
+# ダイクストラ法で用いたテストグラフと異なり、同一ノード間に複数のエッジはないものとします（事前に排除する必要があります）。
 
 # このスクリプトでは、Ford-Fulkerson法を用いて最大フローを求めます。
-# ダイクストラ法で用いたテストグラフと異なり、同一ノード間に複数のエッジはないものとします（事前に結合する必要があります）。
-
 # Ford-Fulkerson法は、教科書（グラフ理論入門）に詳しく記載されています。
+
+# 最大フローを求めるアルゴリズムには、Ford-Fulkerson法のほかに、Dinic法というアルゴリズムがあるようです。
+# Dinic法はFord-Fulkerson法の改良版で、最悪計算量がO(V^2 * E)となるFord-Fulkerson法に対して、O(V^2 * E)となることが知られています。
+
+# 最大フローはマッチング問題にも応用できます。
 
 #
 # 標準ライブラリのインポート
@@ -393,41 +397,173 @@ def update_augmenting_network(augmenting_network: list, augmenting_paths: list):
 
 
 if __name__ == '__main__':
+    import json
 
     # ログレベル設定
     logger.setLevel(logging.INFO)
 
-    # 図6.1
-    fig_6_1_elements = [
-        { 'group': 'nodes', 'data': { 'id': 's' } },
-        { 'group': 'nodes', 'data': { 'id': 'A' } },
-        { 'group': 'nodes', 'data': { 'id': 'B' } },
-        { 'group': 'nodes', 'data': { 'id': 'C' } },
-        { 'group': 'nodes', 'data': { 'id': 'D' } },
-        { 'group': 'nodes', 'data': { 'id': 'E' } },
-        { 'group': 'nodes', 'data': { 'id': 'F' } },
-        { 'group': 'nodes', 'data': { 'id': 'G' } },
-        { 'group': 'nodes', 'data': { 'id': 't' } },
-        { 'group': 'edges', 'data': { 'id': 's_A', 'source': 's', 'target': 'A', 'weight': 5 } },
-        { 'group': 'edges', 'data': { 'id': 's_B', 'source': 's', 'target': 'B', 'weight': 7 } },
-        { 'group': 'edges', 'data': { 'id': 'A_C', 'source': 'A', 'target': 'C', 'weight': 8 } },
-        { 'group': 'edges', 'data': { 'id': 'A_B', 'source': 'A', 'target': 'B', 'weight': 3 } },
-        { 'group': 'edges', 'data': { 'id': 'B_D', 'source': 'B', 'target': 'D', 'weight': 3 } },
-        { 'group': 'edges', 'data': { 'id': 'B_E', 'source': 'B', 'target': 'E', 'weight': 2 } },
-        { 'group': 'edges', 'data': { 'id': 'C_D', 'source': 'C', 'target': 'D', 'weight': 4 } },
-        { 'group': 'edges', 'data': { 'id': 'C_F', 'source': 'C', 'target': 'F', 'weight': 2 } },
-        { 'group': 'edges', 'data': { 'id': 'D_F', 'source': 'D', 'target': 'F', 'weight': 1 } },
-        { 'group': 'edges', 'data': { 'id': 'D_t', 'source': 'D', 'target': 't', 'weight': 4 } },
-        { 'group': 'edges', 'data': { 'id': 'D_G', 'source': 'D', 'target': 'G', 'weight': 4 } },
-        { 'group': 'edges', 'data': { 'id': 'E_D', 'source': 'E', 'target': 'D', 'weight': 3 } },
-        { 'group': 'edges', 'data': { 'id': 'E_G', 'source': 'E', 'target': 'G', 'weight': 3 } },
-        { 'group': 'edges', 'data': { 'id': 'F_t', 'source': 'F', 'target': 't', 'weight': 7 } },
-        { 'group': 'edges', 'data': { 'id': 'G_t', 'source': 'G', 'target': 't', 'weight': 5 } }
-    ]
+    def matching_test_1():
 
-    import json
+        # 以下の表は、10人の男女が、
+        #   - お互いにカップルになってもよい、と思っている場合はo
+        #   - そうでない場合はx
+        # を表しています。最大で何組のカップルができるでしょうか、
+        # という問題を解いてみます。
+
+        matching_text = """
+            o   x   x   o   x   x   x   x   o   x
+            x   x   x   o   x   x   o   x   x   x
+            x   o   x   x   x   o   x   x   x   o
+            x   x   x   o   x   x   x   x   x   x
+            x   x   o   x   x   o   x   x   x   o
+            o   x   x   x   o   x   x   o   x   x
+            x   x   x   o   x   x   o   x   x   x
+            o   x   o   x   x   x   x   x   o   x
+            x   o   x   x   o   x   x   x   x   x
+            x   x   x   o   x   x   x   x   x   x
+        """
+
+        # グラフの要素を格納するリスト
+        elements = []
+
+        # 始点ノード's'を追加
+        elements.append({'group': 'nodes', 'data': { 'id': 's' } })
+
+        # 終点ノード't'を追加
+        elements.append({'group': 'nodes', 'data': { 'id': 't' } })
+
+        # 行は男を、列は女を表すものとして、
+        row_index = 0
+        for row in matching_text.split('\n'):
+            if len(row.strip()) == 0:
+                # 空行はスキップ
+                continue
+
+            # 男ノードを追加
+            male_node_id = f"male_{row_index}"
+            elements.append({'group': 'nodes', 'data': { 'id': male_node_id } })
+
+            # 's'から男ノードへのエッジを追加
+            elements.append({'group': 'edges', 'data': { 'id': f"s-{male_node_id}", 'source': 's', 'target': male_node_id, 'weight': 1 } })
+
+            # 行番号をインクリメント
+            row_index += 1
+
+            # 行を空白で分割して、各列を処理
+            for column_index, column in enumerate(row.split()):
+                if column == 'o':
+                    # まだ女ノードを作っていなければ追加
+                    female_node_id = f"female_{column_index}"
+                    if next((ele for ele in elements if ele.get('data').get('id') == f"female_{column_index}"), None) is None:
+                        elements.append({'group': 'nodes', 'data': { 'id': female_node_id } })
+
+                        # 女ノードから't'へのエッジを追加
+                        elements.append({'group': 'edges', 'data': { 'id': f"{female_node_id}-t", 'source': female_node_id, 'target': 't', 'weight': 1 } })
+
+                    # エッジを追加
+                    edge_id = f"{male_node_id}-{female_node_id}"
+                    elements.append({'group': 'edges', 'data': { 'id': edge_id, 'source': male_node_id, 'target': female_node_id, 'weight': 1 } })
+
+        # 最大フローを求める
+        source_id = 's'
+        target_id = 't'
+        residual_network = calc_max_flow(elements, source_id, target_id)
+
+        # エッジの重みは1なので、エッジのフローが1のものがカップル、0はカップル不成立、ということになる
+        couples = []
+        max_flow = 0
+        for edge in get_edges(residual_network):
+            if edge.get('data').get('is_residual') == True:
+                continue
+            if edge.get('data').get('source') == source_id:
+                continue
+            if edge.get('data').get('target') == target_id:
+                continue
+
+            if edge.get('data').get('flow') != 1:
+                continue
+            max_flow += 1
+
+            male_node_index = int(edge.get('data').get('source').replace('male_', ''))
+            female_node_index = int(edge.get('data').get('target').replace('female_', ''))
+            couples.append((male_node_index, female_node_index))
+
+            print(f"  (男{male_node_index}, 女{female_node_index}) がカップルになりました。")
+        print(f"以上、全部で{max_flow}組のカップルができました。")
+
+        # 行は男を、列は女を表す
+        result_text = ""
+        row_index = 0
+        for row in matching_text.split('\n'):
+            if len(row.strip()) == 0:
+                continue
+            for column_index, column in enumerate(row.split()):
+                if column == 'o':
+                    if (row_index, column_index) in couples:
+                        result_text += " *"
+                    else:
+                        result_text += " o"
+                else:
+                    result_text += " x"
+            result_text += "\n"
+            row_index += 1
+
+        print(result_text)
+
+        """実行結果
+
+        (男0, 女8) がカップルになりました。
+        (男2, 女1) がカップルになりました。
+        (男4, 女9) がカップルになりました。
+        (男5, 女7) がカップルになりました。
+        (男6, 女6) がカップルになりました。
+        (男7, 女2) がカップルになりました。
+        (男8, 女4) がカップルになりました。
+        (男9, 女3) がカップルになりました。
+
+        以上、全部で8組のカップルができました。
+
+        x * x x x o x x x o
+        x x x o x x x x x x
+        x x o x x o x x x *
+        o x x x o x x * x x
+        x x x o x x * x x x
+        o x * x x x x x o x
+        x o x x * x x x x x
+        x x x * x x x x x x
+
+        """
 
     def test_max_flow():
+
+        # 教科書の図6.1
+        fig_6_1_elements = [
+            { 'group': 'nodes', 'data': { 'id': 's' } },
+            { 'group': 'nodes', 'data': { 'id': 'A' } },
+            { 'group': 'nodes', 'data': { 'id': 'B' } },
+            { 'group': 'nodes', 'data': { 'id': 'C' } },
+            { 'group': 'nodes', 'data': { 'id': 'D' } },
+            { 'group': 'nodes', 'data': { 'id': 'E' } },
+            { 'group': 'nodes', 'data': { 'id': 'F' } },
+            { 'group': 'nodes', 'data': { 'id': 'G' } },
+            { 'group': 'nodes', 'data': { 'id': 't' } },
+            { 'group': 'edges', 'data': { 'id': 's_A', 'source': 's', 'target': 'A', 'weight': 5 } },
+            { 'group': 'edges', 'data': { 'id': 's_B', 'source': 's', 'target': 'B', 'weight': 7 } },
+            { 'group': 'edges', 'data': { 'id': 'A_C', 'source': 'A', 'target': 'C', 'weight': 8 } },
+            { 'group': 'edges', 'data': { 'id': 'A_B', 'source': 'A', 'target': 'B', 'weight': 3 } },
+            { 'group': 'edges', 'data': { 'id': 'B_D', 'source': 'B', 'target': 'D', 'weight': 3 } },
+            { 'group': 'edges', 'data': { 'id': 'B_E', 'source': 'B', 'target': 'E', 'weight': 2 } },
+            { 'group': 'edges', 'data': { 'id': 'C_D', 'source': 'C', 'target': 'D', 'weight': 4 } },
+            { 'group': 'edges', 'data': { 'id': 'C_F', 'source': 'C', 'target': 'F', 'weight': 2 } },
+            { 'group': 'edges', 'data': { 'id': 'D_F', 'source': 'D', 'target': 'F', 'weight': 1 } },
+            { 'group': 'edges', 'data': { 'id': 'D_t', 'source': 'D', 'target': 't', 'weight': 4 } },
+            { 'group': 'edges', 'data': { 'id': 'D_G', 'source': 'D', 'target': 'G', 'weight': 4 } },
+            { 'group': 'edges', 'data': { 'id': 'E_D', 'source': 'E', 'target': 'D', 'weight': 3 } },
+            { 'group': 'edges', 'data': { 'id': 'E_G', 'source': 'E', 'target': 'G', 'weight': 3 } },
+            { 'group': 'edges', 'data': { 'id': 'F_t', 'source': 'F', 'target': 't', 'weight': 7 } },
+            { 'group': 'edges', 'data': { 'id': 'G_t', 'source': 'G', 'target': 't', 'weight': 5 } }
+        ]
+
         elements = fig_6_1_elements
         source_id = 's'
         target_id = 't'
@@ -442,6 +578,7 @@ if __name__ == '__main__':
 
     def main():
         test_max_flow()
+        # matching_test_1()
         return 0
 
     # 実行
