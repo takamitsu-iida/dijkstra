@@ -56,7 +56,9 @@ JavaScript実装ではcytoscape.jsの描画機能を使ってグラフを可視�
 
 <br>
 
-> [!NOTE] cytoscape.jsのデータ形式
+> [!NOTE]
+>
+>  cytoscape.jsのデータ形式
 >
 > https://js.cytoscape.org/#notation/elements-json
 
@@ -73,7 +75,9 @@ JavaScript実装ではcytoscape.jsの描画機能を使ってグラフを可視�
 
 <br>
 
-> [!NOTE] 参考文献
+> [!NOTE]
+>
+> 参考文献
 >
 > グラフ理論入門　宮崎修一 著 森北出版株式会社
 >
@@ -85,7 +89,9 @@ JavaScript実装ではcytoscape.jsの描画機能を使ってグラフを可視�
 
 <br>
 
-> [!NOTE] 参考文献
+> [!NOTE]
+>
+> 参考文献
 >
 > アルゴリズム図鑑 増補改訂版 石田保輝 宮崎修一著 翔泳社
 >
